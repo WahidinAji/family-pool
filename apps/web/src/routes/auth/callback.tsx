@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { trpc } from '@/lib/trpc'
 import { Button } from '@/components/ui/button'
@@ -16,8 +16,15 @@ function AuthCallbackPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const verifyMagicLink = trpc.auth.verifyMagicLink.useMutation()
+  // StrictMode double-invokes effects in dev; the token is single-use, so a
+  // second mutate() call would always fail and could clobber the first
+  // call's success. Guard so it only ever fires once per mount.
+  const hasStarted = useRef(false)
 
   useEffect(() => {
+    if (hasStarted.current) return
+    hasStarted.current = true
+
     if (!token) {
       setError('This login link is missing a token.')
       return
@@ -25,7 +32,7 @@ function AuthCallbackPage() {
     verifyMagicLink.mutate(
       { token },
       {
-        onSuccess: () => navigate({ to: '/home' }),
+        onSuccess: () => navigate({ to: '/rooms' }),
         onError: (err) => setError(err.message),
       },
     )

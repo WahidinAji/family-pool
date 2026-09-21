@@ -4,27 +4,7 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { currentUser } from '@/lib/mockData'
-import { useUiTheme } from '@/lib/theme'
-
-function ThemeToggle() {
-  const [theme, setTheme] = useUiTheme()
-
-  return (
-    <div data-slot="theme-toggle" className="inline-flex overflow-hidden rounded-md border">
-      {(['modern', 'retro'] as const).map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => setTheme(option)}
-          data-active={theme === option}
-          className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground text-muted-foreground px-2.5 py-1 text-xs capitalize"
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  )
-}
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function MockupShell({
   title,

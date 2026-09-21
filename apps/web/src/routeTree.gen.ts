@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthedHomeRouteImport } from './routes/_authed/home'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as MockupsIndexRouteImport } from './routes/mockups/index'
 import { Route as MockupsInboxRouteImport } from './routes/mockups/inbox'
@@ -20,6 +19,9 @@ import { Route as MockupsPoolArisanRouteImport } from './routes/mockups/pool-ari
 import { Route as MockupsPoolCostSplitRouteImport } from './routes/mockups/pool-cost-split'
 import { Route as MockupsRoomRouteImport } from './routes/mockups/room'
 import { Route as MockupsRoomsRouteImport } from './routes/mockups/rooms'
+import { Route as AuthedRoomsIndexRouteImport } from './routes/_authed/rooms/index'
+import { Route as AuthedRoomsJoinRouteImport } from './routes/_authed/rooms/join'
+import { Route as AuthedRoomsRoomIdIndexRouteImport } from './routes/_authed/rooms/$roomId/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,11 +36,6 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthedHomeRoute = AuthedHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
@@ -75,11 +72,25 @@ const MockupsRoomsRoute = MockupsRoomsRouteImport.update({
   path: '/mockups/rooms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedRoomsIndexRoute = AuthedRoomsIndexRouteImport.update({
+  id: '/rooms/',
+  path: '/rooms/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedRoomsJoinRoute = AuthedRoomsJoinRouteImport.update({
+  id: '/rooms/join',
+  path: '/rooms/join',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedRoomsRoomIdIndexRoute = AuthedRoomsRoomIdIndexRouteImport.update({
+  id: '/rooms/$roomId/',
+  path: '/rooms/$roomId/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/home': typeof AuthedHomeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/mockups/inbox': typeof MockupsInboxRoute
   '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
@@ -87,11 +98,13 @@ export interface FileRoutesByFullPath {
   '/mockups/room': typeof MockupsRoomRoute
   '/mockups/rooms': typeof MockupsRoomsRoute
   '/mockups/': typeof MockupsIndexRoute
+  '/rooms/join': typeof AuthedRoomsJoinRoute
+  '/rooms/': typeof AuthedRoomsIndexRoute
+  '/rooms/$roomId/': typeof AuthedRoomsRoomIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/home': typeof AuthedHomeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/mockups/inbox': typeof MockupsInboxRoute
   '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
@@ -99,13 +112,15 @@ export interface FileRoutesByTo {
   '/mockups/room': typeof MockupsRoomRoute
   '/mockups/rooms': typeof MockupsRoomsRoute
   '/mockups': typeof MockupsIndexRoute
+  '/rooms/join': typeof AuthedRoomsJoinRoute
+  '/rooms': typeof AuthedRoomsIndexRoute
+  '/rooms/$roomId': typeof AuthedRoomsRoomIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authed/home': typeof AuthedHomeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/mockups/inbox': typeof MockupsInboxRoute
   '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
@@ -113,13 +128,15 @@ export interface FileRoutesById {
   '/mockups/room': typeof MockupsRoomRoute
   '/mockups/rooms': typeof MockupsRoomsRoute
   '/mockups/': typeof MockupsIndexRoute
+  '/_authed/rooms/join': typeof AuthedRoomsJoinRoute
+  '/_authed/rooms/': typeof AuthedRoomsIndexRoute
+  '/_authed/rooms/$roomId/': typeof AuthedRoomsRoomIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login'
-    | '/home'
     | '/auth/callback'
     | '/mockups/inbox'
     | '/mockups/pool-arisan'
@@ -127,11 +144,13 @@ export interface FileRouteTypes {
     | '/mockups/room'
     | '/mockups/rooms'
     | '/mockups/'
+    | '/rooms/join'
+    | '/rooms/'
+    | '/rooms/$roomId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/home'
     | '/auth/callback'
     | '/mockups/inbox'
     | '/mockups/pool-arisan'
@@ -139,12 +158,14 @@ export interface FileRouteTypes {
     | '/mockups/room'
     | '/mockups/rooms'
     | '/mockups'
+    | '/rooms/join'
+    | '/rooms'
+    | '/rooms/$roomId'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/login'
-    | '/_authed/home'
     | '/auth/callback'
     | '/mockups/inbox'
     | '/mockups/pool-arisan'
@@ -152,6 +173,9 @@ export interface FileRouteTypes {
     | '/mockups/room'
     | '/mockups/rooms'
     | '/mockups/'
+    | '/_authed/rooms/join'
+    | '/_authed/rooms/'
+    | '/_authed/rooms/$roomId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,13 +213,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authed/home': {
-      id: '/_authed/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthedHomeRouteImport
-      parentRoute: typeof AuthedRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -246,15 +263,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MockupsRoomsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/rooms/': {
+      id: '/_authed/rooms/'
+      path: '/rooms'
+      fullPath: '/rooms/'
+      preLoaderRoute: typeof AuthedRoomsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/rooms/join': {
+      id: '/_authed/rooms/join'
+      path: '/rooms/join'
+      fullPath: '/rooms/join'
+      preLoaderRoute: typeof AuthedRoomsJoinRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/rooms/$roomId/': {
+      id: '/_authed/rooms/$roomId/'
+      path: '/rooms/$roomId'
+      fullPath: '/rooms/$roomId/'
+      preLoaderRoute: typeof AuthedRoomsRoomIdIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
-  AuthedHomeRoute: typeof AuthedHomeRoute
+  AuthedRoomsJoinRoute: typeof AuthedRoomsJoinRoute
+  AuthedRoomsIndexRoute: typeof AuthedRoomsIndexRoute
+  AuthedRoomsRoomIdIndexRoute: typeof AuthedRoomsRoomIdIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedHomeRoute: AuthedHomeRoute,
+  AuthedRoomsJoinRoute: AuthedRoomsJoinRoute,
+  AuthedRoomsIndexRoute: AuthedRoomsIndexRoute,
+  AuthedRoomsRoomIdIndexRoute: AuthedRoomsRoomIdIndexRoute,
 }
 
 const AuthedRouteWithChildren =

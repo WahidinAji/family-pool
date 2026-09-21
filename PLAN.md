@@ -70,16 +70,16 @@ Build tables in dependency order; one migration per numbered item so history sta
 
 ## Phase 3 — Rooms & Invites
 
-- [ ] 3.1 tRPC: `room.create` (name) — creates room + an owner `room_memberships` row for the creator.
-- [ ] 3.2 tRPC: `room.listMine` — rooms the current user belongs to (owner or member), with role.
-- [ ] 3.3 tRPC: `room.get(roomId)` — room detail + membership list; enforce caller is a member.
-- [ ] 3.4 tRPC: `room.createInvite(roomId)` / `room.revokeInvite(roomId)` — owner-only; generates/revokes the reusable code.
-- [ ] 3.5 tRPC: `room.joinByInvite(code)` — validates invite is not revoked, creates a `room_memberships` row for the caller (role = member) if not already a member.
-- [ ] 3.6 tRPC: `room.removeMember` / `room.leaveRoom` — owner can't leave/remove themself without transferring ownership or deleting the room (decide + document this edge case explicitly in code comments since it's a real corner case).
-- [ ] 3.7 Frontend: room list/dashboard page.
-- [ ] 3.8 Frontend: room detail page shell (tabs: Pools, Members, Settings) — pools/members tabs get filled in later phases.
-- [ ] 3.9 Frontend: "join a room" flow (paste/open invite link → confirm → join).
-- [ ] 3.10 Frontend: invite management UI (owner-only): show current link, copy button, regenerate/revoke.
+- [x] 3.1 tRPC: `room.create` (name) — creates room + an owner `room_memberships` row for the creator.
+- [x] 3.2 tRPC: `room.listMine` — rooms the current user belongs to (owner or member), with role.
+- [x] 3.3 tRPC: `room.get(roomId)` — room detail + membership list; enforce caller is a member.
+- [x] 3.4 tRPC: `room.createInvite(roomId)` / `room.revokeInvite(roomId)` — owner-only; generates/revokes the reusable code.
+- [x] 3.5 tRPC: `room.joinByInvite(code)` — validates invite is not revoked, creates a `room_memberships` row for the caller (role = member) if not already a member.
+- [x] 3.6 tRPC: `room.removeMember` / `room.leaveRoom` — owner can't leave/remove themself without transferring ownership or deleting the room (decide + document this edge case explicitly in code comments since it's a real corner case).
+- [x] 3.7 Frontend: room list/dashboard page.
+- [x] 3.8 Frontend: room detail page shell (tabs: Pools, Members, Settings) — pools/members tabs get filled in later phases.
+- [x] 3.9 Frontend: "join a room" flow (paste/open invite link → confirm → join).
+- [x] 3.10 Frontend: invite management UI (owner-only): show current link, copy button, regenerate/revoke.
 
 ## Phase 4 — Cost-Split Pools (Spotify-style)
 

@@ -38,21 +38,21 @@ Source of truth for scope: this doc reflects a full requirements interview (gril
 
 Build tables in dependency order; one migration per numbered item so history stays reviewable.
 
-- [ ] 1.1 `users` (id, email unique, display_name nullable, created_at).
-- [ ] 1.2 `magic_link_tokens` (id, email, token_hash, expires_at, consumed_at nullable, created_at).
-- [ ] 1.3 `sessions` (id, user_id, expires_at, created_at) — DB-backed sessions (not JWT), so a session can be revoked by deleting the row.
-- [ ] 1.4 `rooms` (id, name, created_by_user_id, created_at).
-- [ ] 1.5 `room_memberships` (id, room_id, user_id, role enum['owner','member'], joined_at, left_at nullable). Unique constraint on (room_id, user_id).
-- [ ] 1.6 `room_invites` (id, room_id, code unique, created_by_user_id, revoked_at nullable, created_at).
-- [ ] 1.7 `pools` (id, room_id, type enum['cost_split','rotating_pot'], name, currency_code default 'IDR', period enum['monthly'] for now, created_at, archived_at nullable).
-- [ ] 1.8 `pool_price_history` (id, pool_id, effective_from date, per_person_amount integer, created_at) — the pool's default equal-split price over time.
-- [ ] 1.9 `pool_memberships` (id, pool_id, user_id, joined_at, left_at nullable). Unique on (pool_id, user_id).
-- [ ] 1.10 `pool_membership_overrides` (id, pool_membership_id, effective_from date, amount integer, created_at) — optional custom price overriding the pool default for that member from that date.
-- [ ] 1.11 `receipts` (id, pool_id, uploaded_by_user_id, image_path, extracted_amount integer nullable, confirmed_amount integer nullable, status enum['pending','approved','rejected'], reviewed_by_user_id nullable, reviewed_at nullable, ocr_raw jsonb/text nullable, created_at).
-- [ ] 1.12 `pool_ledger_entries` (id, pool_membership_id, receipt_id nullable, amount_delta integer, reason enum['contribution','adjustment','pot_payout'], created_at) — append-only; balance = SUM(amount_delta) per pool_membership.
-- [ ] 1.13 `rotating_pot_cycles` (id, pool_id, cycle_number, started_at, ended_at nullable).
-- [ ] 1.14 `rotating_pot_rounds` (id, cycle_id, round_number, period_label, winner_pool_membership_id nullable, drawn_at nullable, status enum['pending','drawn']).
-- [ ] 1.15 Seed script: one test room, one cost-split pool, one rotating-pot pool, a few fake users/memberships — for local dev only.
+- [x] 1.1 `users` (id, email unique, display_name nullable, created_at).
+- [x] 1.2 `magic_link_tokens` (id, email, token_hash, expires_at, consumed_at nullable, created_at).
+- [x] 1.3 `sessions` (id, user_id, expires_at, created_at) — DB-backed sessions (not JWT), so a session can be revoked by deleting the row.
+- [x] 1.4 `rooms` (id, name, created_by_user_id, created_at).
+- [x] 1.5 `room_memberships` (id, room_id, user_id, role enum['owner','member'], joined_at, left_at nullable). Unique constraint on (room_id, user_id).
+- [x] 1.6 `room_invites` (id, room_id, code unique, created_by_user_id, revoked_at nullable, created_at).
+- [x] 1.7 `pools` (id, room_id, type enum['cost_split','rotating_pot'], name, currency_code default 'IDR', period enum['monthly'] for now, created_at, archived_at nullable).
+- [x] 1.8 `pool_price_history` (id, pool_id, effective_from date, per_person_amount integer, created_at) — the pool's default equal-split price over time.
+- [x] 1.9 `pool_memberships` (id, pool_id, user_id, joined_at, left_at nullable). Unique on (pool_id, user_id).
+- [x] 1.10 `pool_membership_overrides` (id, pool_membership_id, effective_from date, amount integer, created_at) — optional custom price overriding the pool default for that member from that date.
+- [x] 1.11 `receipts` (id, pool_id, uploaded_by_user_id, image_path, extracted_amount integer nullable, confirmed_amount integer nullable, status enum['pending','approved','rejected'], reviewed_by_user_id nullable, reviewed_at nullable, ocr_raw jsonb/text nullable, created_at).
+- [x] 1.12 `pool_ledger_entries` (id, pool_membership_id, receipt_id nullable, amount_delta integer, reason enum['contribution','adjustment','pot_payout'], created_at) — append-only; balance = SUM(amount_delta) per pool_membership.
+- [x] 1.13 `rotating_pot_cycles` (id, pool_id, cycle_number, started_at, ended_at nullable).
+- [x] 1.14 `rotating_pot_rounds` (id, cycle_id, round_number, period_label, winner_pool_membership_id nullable, drawn_at nullable, status enum['pending','drawn']).
+- [x] 1.15 Seed script: one test room, one cost-split pool, one rotating-pot pool, a few fake users/memberships — for local dev only.
 
 ## Phase 2 — Auth (Magic Link via Resend)
 

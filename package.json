@@ -10,6 +10,7 @@
     "dev:server": "pnpm --filter @family-pool/server dev",
     "db:generate": "pnpm --filter @family-pool/db generate",
     "db:migrate": "pnpm --filter @family-pool/db migrate",
+    "db:seed": "pnpm --filter @family-pool/db seed",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

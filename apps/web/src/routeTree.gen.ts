@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthedInboxRouteImport } from './routes/_authed/inbox'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as MockupsIndexRouteImport } from './routes/mockups/index'
 import { Route as MockupsInboxRouteImport } from './routes/mockups/inbox'
@@ -37,6 +38,11 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedInboxRoute = AuthedInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
@@ -98,6 +104,7 @@ const AuthedRoomsRoomIdPoolsPoolIdIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/inbox': typeof AuthedInboxRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/mockups/inbox': typeof MockupsInboxRoute
   '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/inbox': typeof AuthedInboxRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/mockups/inbox': typeof MockupsInboxRoute
   '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authed/inbox': typeof AuthedInboxRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/mockups/inbox': typeof MockupsInboxRoute
   '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/inbox'
     | '/auth/callback'
     | '/mockups/inbox'
     | '/mockups/pool-arisan'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/inbox'
     | '/auth/callback'
     | '/mockups/inbox'
     | '/mockups/pool-arisan'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authed'
     | '/login'
+    | '/_authed/inbox'
     | '/auth/callback'
     | '/mockups/inbox'
     | '/mockups/pool-arisan'
@@ -226,6 +238,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authed/inbox': {
+      id: '/_authed/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AuthedInboxRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -308,6 +327,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedInboxRoute: typeof AuthedInboxRoute
   AuthedRoomsJoinRoute: typeof AuthedRoomsJoinRoute
   AuthedRoomsIndexRoute: typeof AuthedRoomsIndexRoute
   AuthedRoomsRoomIdIndexRoute: typeof AuthedRoomsRoomIdIndexRoute
@@ -315,6 +335,7 @@ interface AuthedRouteChildren {
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedInboxRoute: AuthedInboxRoute,
   AuthedRoomsJoinRoute: AuthedRoomsJoinRoute,
   AuthedRoomsIndexRoute: AuthedRoomsIndexRoute,
   AuthedRoomsRoomIdIndexRoute: AuthedRoomsRoomIdIndexRoute,

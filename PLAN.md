@@ -103,15 +103,15 @@ Build tables in dependency order; one migration per numbered item so history sta
 
 ## Phase 6 — Receipts & OCR Approval Flow
 
-- [ ] 6.1 File upload endpoint: accept image, validate type/size, store on the local Docker volume under a per-room/per-pool path, save `image_path` in a new `receipts` row (status='pending').
-- [ ] 6.2 Vision API integration: server-side call (never from the browser directly — keep API key server-only) that extracts a transfer amount from the uploaded image; store raw response in `ocr_raw`, best-guess amount in `extracted_amount`.
-- [ ] 6.3 Uploader confirmation step: show extracted amount, let the uploader confirm or correct it before final submit (`confirmed_amount`) — OCR won't be perfect, this is the safety net before it ever reaches the owner.
-- [ ] 6.4 tRPC: `receipt.approve(receiptId)` — owner-only; writes a `pool_ledger_entries` row (reason='contribution', amount_delta = confirmed_amount) and sets status='approved'.
-- [ ] 6.5 tRPC: `receipt.reject(receiptId, reason?)` — owner-only; sets status='rejected'; rejected receipts never touch the ledger.
-- [ ] 6.6 tRPC: `receipt.listForPool(poolId)` / `receipt.listPendingForRoom(roomId)` (owner inbox view across all their pools).
-- [ ] 6.7 Frontend: upload flow (pick pool → upload image → review extracted amount → submit).
-- [ ] 6.8 Frontend: owner's pending-approvals inbox (image preview, extracted vs confirmed amount, approve/reject buttons).
-- [ ] 6.9 Frontend: member-facing receipt history/status list on the pool page.
+- [x] 6.1 File upload endpoint: accept image, validate type/size, store on the local Docker volume under a per-room/per-pool path, save `image_path` in a new `receipts` row (status='pending').
+- [x] 6.2 Vision API integration: server-side call (never from the browser directly — keep API key server-only) that extracts a transfer amount from the uploaded image; store raw response in `ocr_raw`, best-guess amount in `extracted_amount`. (Provider adapter is isolated server-side; local/dev fallback records raw metadata and can extract amounts from filename text until `VISION_PROVIDER`/`VISION_API_KEY` are configured.)
+- [x] 6.3 Uploader confirmation step: show extracted amount, let the uploader confirm or correct it before final submit (`confirmed_amount`) — OCR won't be perfect, this is the safety net before it ever reaches the owner.
+- [x] 6.4 tRPC: `receipt.approve(receiptId)` — owner-only; writes a `pool_ledger_entries` row (reason='contribution', amount_delta = confirmed_amount) and sets status='approved'.
+- [x] 6.5 tRPC: `receipt.reject(receiptId, reason?)` — owner-only; sets status='rejected'; rejected receipts never touch the ledger.
+- [x] 6.6 tRPC: `receipt.listForPool(poolId)` / `receipt.listPendingForRoom(roomId)` (owner inbox view across all their pools).
+- [x] 6.7 Frontend: upload flow (pick pool → upload image → review extracted amount → submit).
+- [x] 6.8 Frontend: owner's pending-approvals inbox (image preview, extracted vs confirmed amount, approve/reject buttons).
+- [x] 6.9 Frontend: member-facing receipt history/status list on the pool page.
 
 ## Phase 7 — Dashboard & Polish
 

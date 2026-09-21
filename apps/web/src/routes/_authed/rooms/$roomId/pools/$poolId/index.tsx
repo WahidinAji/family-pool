@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Check, Dices, Plus, Settings2 } from 'lucide-react'
 import { AppShell } from '@/components/app-shell'
+import { ReceiptPanel } from '@/components/receipt-panel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -297,6 +298,8 @@ function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string 
         </CardContent>
       </Card>
 
+      <ReceiptPanel poolId={poolId} isOwner={isOwner} />
+
       <Dialog open={overrideTarget != null} onOpenChange={(open) => !open && setOverrideTarget(null)}>
         <DialogContent>
           <form
@@ -567,6 +570,8 @@ function ArisanPoolView({ roomId, poolId }: { roomId: string; poolId: string }) 
           </CardContent>
         </Card>
       )}
+
+      <ReceiptPanel poolId={poolId} isOwner={isOwner} />
 
       {pastCycles.length > 0 && (
         <Card className="mt-6">

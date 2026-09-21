@@ -2,6 +2,7 @@ import { router } from '../trpc.js'
 import { authRouter } from './auth.js'
 import { healthRouter } from './health.js'
 import { poolRouter } from './pool.js'
+import { receiptRouter } from './receipt.js'
 import { roomRouter } from './room.js'
 
 export const appRouter = router({
@@ -9,6 +10,7 @@ export const appRouter = router({
   auth: authRouter,
   room: roomRouter,
   pool: poolRouter,
+  receipt: receiptRouter,
 })
 
 export type AppRouter = typeof appRouter

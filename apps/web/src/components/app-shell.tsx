@@ -39,6 +39,11 @@ export function AppShell({
             family-pool
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
+            {user && (
+              <Link to="/inbox" className="text-muted-foreground hover:text-foreground text-sm">
+                Inbox
+              </Link>
+            )}
             <ThemeToggle />
             {user && (
               <>
@@ -60,16 +65,19 @@ export function AppShell({
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             {crumbs && crumbs.length > 0 && (
-              <nav className="text-muted-foreground mb-1 flex items-center gap-1 text-sm">
+              <nav className="text-muted-foreground mb-1 flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {crumbs.map((crumb, i) => (
-                  <span key={crumb.label} className="flex items-center gap-1">
-                    {i > 0 && <span>/</span>}
+                  <span key={crumb.label} className="flex min-w-0 shrink-0 items-center gap-1">
+                    {i > 0 && <span className="shrink-0">/</span>}
                     {crumb.to ? (
-                      <Link to={crumb.to} className="hover:text-foreground hover:underline">
+                      <Link
+                        to={crumb.to}
+                        className="block max-w-32 truncate hover:text-foreground hover:underline sm:max-w-none"
+                      >
                         {crumb.label}
                       </Link>
                     ) : (
-                      <span>{crumb.label}</span>
+                      <span className="block max-w-44 truncate sm:max-w-none">{crumb.label}</span>
                     )}
                   </span>
                 ))}

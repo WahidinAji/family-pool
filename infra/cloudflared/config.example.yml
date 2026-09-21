@@ -1,0 +1,12 @@
+# Example cloudflared config for a locally managed tunnel.
+# If you manage ingress in Cloudflare Zero Trust instead, point the public
+# hostname service at http://web:80 (inside compose) or http://localhost:8080
+# (when cloudflared runs on the host).
+
+tunnel: family-pool
+credentials-file: /etc/cloudflared/family-pool.json
+
+ingress:
+  - hostname: family-pool.example.com
+    service: http://web:80
+  - service: http_status:404

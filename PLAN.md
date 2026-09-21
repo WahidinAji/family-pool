@@ -128,8 +128,8 @@ Build tables in dependency order; one migration per numbered item so history sta
 - [x] 8.2 `docker-compose.yml`: app service + volumes for SQLite data dir and receipt-image dir.
 - [x] 8.3 Wire environment variables (Resend key, OCR service URL, session secret, public URL) via `.env` consumed by compose.
 - [x] 8.4 Drizzle migration run step on container startup (or a separate one-shot migrate job before the app starts).
-- [ ] 8.5 Hook up the existing cloudflared tunnel config to point at the app's container port.
-- [ ] 8.6 Set up Litestream (or a cron `sqlite3 .backup` script) writing snapshots to a separate volume/remote target.
+- [x] 8.5 Hook up the existing cloudflared tunnel config to point at the app's container port.
+- [x] 8.6 Set up Litestream (or a cron `sqlite3 .backup` script) writing snapshots to a separate volume/remote target.
 - [ ] 8.7 Smoke-test the full flow against the deployed instance: signup via magic link → create room → invite → join → create both pool types → upload+approve a receipt → run an arisan draw.
 
 ## Phase 9 — Tests & Hardening (ongoing, not strictly sequential)

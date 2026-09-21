@@ -37,6 +37,31 @@ services:
       OCR_ADDR: :8080
       TESSERACT_LANG: ind+eng
 
+  backup:
+    profiles: ["backup"]
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.backup
+    environment:
+      DATABASE_PATH: /data/app.sqlite
+      BACKUP_DIR: /backups
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - sqlite-data:/data:ro
+      - backup-data:/backups
+    depends_on:
+      - server
+
+  cloudflared:
+    profiles: ["tunnel"]
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TUNNEL_TOKEN:-}
+    depends_on:
+      - web
+    restart: unless-stopped
+
 volumes:
   sqlite-data:
   receipt-images:
+  backup-data:

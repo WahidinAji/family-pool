@@ -113,6 +113,33 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0)
   }
+  /* Windows XP "Luna" pastiche — toggled like dark/light mode, see lib/theme.ts.
+     Color/radius tokens here reskin every shadcn component for free since they
+     all read from these same custom properties. The chrome-specific bevel/
+     gradient rules (buttons, card title bars, etc.) live unlayered at the
+     bottom of this file so they win over Tailwind's utility layer. */
+  .retro {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0 0 0);
+    --primary: #245edc;
+    --primary-foreground: #ffffff;
+    --secondary: #ece9d8;
+    --secondary-foreground: #000000;
+    --muted: #ece9d8;
+    --muted-foreground: #4d4d4d;
+    --accent: #d4d0c8;
+    --accent-foreground: #000000;
+    --destructive: #c40000;
+    --border: #0a246a;
+    --input: #7f9db9;
+    --ring: #245edc;
+    --radius: 4px;
+    font-family: Tahoma, Verdana, 'Segoe UI', sans-serif;
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -122,4 +149,103 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Retro (WinXP) chrome overrides — deliberately unlayered so they beat
+   Tailwind's utility layer regardless of selector specificity. Targets the
+   data-slot attributes shadcn already puts on every component; the "modern"
+   theme's component files are never touched. */
+.retro [data-slot='shell'] {
+  background: linear-gradient(180deg, #6d97e8 0%, #3a67b5 55%, #2a4f96 100%);
+  background-attachment: fixed;
+}
+.retro [data-slot='shell-header'] {
+  background: var(--secondary);
+}
+
+.retro [data-slot='card'] {
+  border: 1px solid var(--border);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+}
+.retro [data-slot='card-header'] {
+  /* Gradient's lightest stop (#3f6fd6) is deliberately no lighter than this —
+     it's the darkest point that still holds 4.5:1 contrast with white text
+     (WCAG AA). Don't lighten it without re-checking contrast at the top. */
+  background: linear-gradient(180deg, #3f6fd6 0%, #2a5fd8 45%, #1941a5 100%);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+.retro [data-slot='card-header'] [data-slot='card-title'] {
+  color: #ffffff;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.45);
+}
+.retro [data-slot='card-header'] [data-slot='card-description'] {
+  /* Same white as the title, full opacity — differentiated by weight only.
+     A dimmer/translucent white fails contrast against the gradient's top
+     stop (verified: 85% opacity drops it to 3.87:1, below the 4.5:1 floor). */
+  color: #ffffff;
+}
+
+.retro [data-slot='button'] {
+  border-color: var(--border);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.25);
+}
+.retro [data-slot='button'][data-variant='default'] {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 40%);
+}
+.retro [data-slot='button']:active {
+  box-shadow:
+    inset -1px -1px 0 rgba(255, 255, 255, 0.5),
+    inset 1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.retro [data-slot='input'] {
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+  background: var(--background);
+}
+
+.retro [data-slot='badge'] {
+  border-radius: 3px;
+}
+.retro [data-slot='badge'][data-variant='outline'] {
+  background: var(--background);
+}
+
+.retro [data-slot='tabs-list'] {
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0 0 0 2px;
+}
+.retro [data-slot='tabs-trigger'] {
+  border: 1px solid transparent;
+}
+.retro [data-slot='tabs-trigger'][data-state='active'],
+.retro [data-slot='tabs-trigger'][data-active] {
+  border-color: var(--border) var(--border) var(--background) var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  margin-bottom: -1px;
+  background: var(--background);
+}
+
+.retro [data-slot='table-header'] {
+  background: var(--muted);
+}
+.retro [data-slot='table-row'] {
+  border-color: #d4d0c8;
+}
+
+.retro [data-slot='progress'] {
+  height: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+  padding: 1px;
+}
+.retro [data-slot='progress-indicator'] {
+  border-radius: 1px;
+  background-image: repeating-linear-gradient(90deg, #3fdc4a 0px, #3fdc4a 6px, #1f9e2c 6px, #1f9e2c 8px);
 }

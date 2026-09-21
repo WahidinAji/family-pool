@@ -18,6 +18,8 @@ Source of truth for scope: this doc reflects a full requirements interview (gril
 - **Notifications**: in-app only for v1. No email beyond the magic-link login itself.
 - **Stack**: pnpm monorepo; **React + TanStack Router + TanStack Query + tRPC** frontend; **Effect** on the backend only; **Drizzle ORM + SQLite**; **Tailwind + shadcn/ui**.
 - **Infra**: self-hosted on homelab via **Docker**, exposed through the existing **cloudflared tunnel** (Cloudflare Zero Trust). Single-node deployment — this is why SQLite is the right call (no serverless/ephemeral-filesystem problem). Back up the SQLite file with **Litestream** or a volume-snapshot cron given it tracks real money.
+- **Accessibility**: target **WCAG 2.1 Level AA** across the app (color contrast ratios — 4.5:1 for normal text, 3:1 for large text/UI components — keyboard navigation, focus indicators, semantic HTML/ARIA labels). For color specifically, follow **colorblind-safe design** (the **Okabe–Ito palette** / **Color Universal Design (CUD)** principles, the internationally-cited standard for this): never encode meaning in color alone — pair it with text, an icon, or a sign (e.g. balance owed already renders as "-Rp400.000" not just red text; keep that pattern everywhere status is shown). This is a standing constraint on every phase from here on, not a one-time Phase 7 task.
+- **UI themes**: the app ships **two visual themes** — `modern` (default shadcn look) and `retro` (a Windows XP "Luna" pastiche) — toggled by the user exactly like dark/light mode (a class on `<html>`, persisted to localStorage), not separate pages or a build flag. Implemented entirely as CSS keyed off shadcn's `data-slot` attributes (see `apps/web/src/index.css` and `AGENTS.md`); no component file forks between themes. Any new component or page must render acceptably in both.
 - Explicitly deferred to post-v1 (do not build now): co-admin role, email/push notifications beyond login, multi-currency per room, object storage (MinIO), OAuth login.
 
 ---
@@ -118,6 +120,7 @@ Build tables in dependency order; one migration per numbered item so history sta
 - [ ] 7.3 Toast/error handling conventions wired consistently through tRPC error boundaries.
 - [ ] 7.4 Mobile-responsive pass on all pages (this will very likely be used from phones for photo uploads).
 - [ ] 7.5 Basic loading/skeleton states for async data via TanStack Query.
+- [ ] 7.6 Accessibility audit pass: run an automated contrast/a11y checker (e.g. axe-core or Lighthouse) against every page in both themes (modern + retro), fix WCAG 2.1 AA contrast failures, verify keyboard-only navigation through the core flows (login, approve/reject a receipt, run an arisan draw), and check focus indicators are visible on every interactive element.
 
 ## Phase 8 — Deployment
 

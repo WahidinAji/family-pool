@@ -54,6 +54,43 @@ Typecheck a single package directly when iterating, e.g.
 `pnpm --filter @family-pool/server exec tsc --noEmit -p .` or
 `pnpm --filter @family-pool/web exec tsc -b --noEmit --force`.
 
+## UI design reference
+
+Before building any real page (Phase 3+), check `apps/web/src/routes/mockups/` — static,
+fake-data screens reviewed with the user for room list, room detail, cost-split pool,
+rotating-pot pool, and receipt inbox layouts. Screenshots are in `design/mockups/*.png`
+(gitignored, regenerate with Playwright if needed — see chat history for the script, nothing
+persisted). Match these layouts/flows unless the user asks to change them; don't reinvent the
+IA from scratch.
+
+There are **two UI themes**, toggled exactly like dark/light mode (not separate pages):
+- `modern` — the default shadcn look.
+- `retro` — a Windows XP "Luna" pastiche, toggled via a class on `<html>` (see
+  `apps/web/src/lib/theme.ts`) and persisted to localStorage.
+
+The retro theme is implemented *entirely* as CSS in `apps/web/src/index.css` (a `.retro`
+variable block plus unlayered `.retro [data-slot="..."]` chrome rules keyed off the
+`data-slot` attributes every shadcn component already has) — **no shadcn component file is
+ever modified** for retro. When adding a new shadcn component, check whether its `data-slot`
+values need matching retro rules added (button/card/input/badge/tabs/table/progress are
+already covered); if you skip this, the component will still work, just render in the
+modern-theme colors while inside a `.retro` context — not broken, just unstyled for retro.
+
+## Accessibility
+
+Standing constraint on every phase (not a one-time cleanup task — see PLAN.md Product
+Decisions and Phase 7.6):
+
+- Target **WCAG 2.1 Level AA**: 4.5:1 contrast for normal text, 3:1 for large text/UI
+  components, visible focus indicators, keyboard-operable flows, semantic HTML/ARIA.
+- **Never encode meaning in color alone** (colorblind-safe design — Okabe–Ito palette / Color
+  Universal Design principles). Pair color with text, an icon, or a sign. Example already in
+  the mockups: a negative balance renders as `-Rp400.000` (the minus sign carries the
+  meaning), color is just reinforcement — keep that pattern for every new status indicator.
+- Check both themes (modern + retro) when touching shared chrome — the retro theme's blue
+  gradient card headers and beveled buttons need their own contrast check, they don't
+  automatically inherit modern's contrast just because the underlying markup is identical.
+
 ## Conventions established so far
 
 - **Balance model**: `pool_ledger_entries` is append-only and is the source of truth for a

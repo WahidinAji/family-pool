@@ -14,6 +14,12 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedHomeRouteImport } from './routes/_authed/home'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as MockupsIndexRouteImport } from './routes/mockups/index'
+import { Route as MockupsInboxRouteImport } from './routes/mockups/inbox'
+import { Route as MockupsPoolArisanRouteImport } from './routes/mockups/pool-arisan'
+import { Route as MockupsPoolCostSplitRouteImport } from './routes/mockups/pool-cost-split'
+import { Route as MockupsRoomRouteImport } from './routes/mockups/room'
+import { Route as MockupsRoomsRouteImport } from './routes/mockups/rooms'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,18 +45,60 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MockupsIndexRoute = MockupsIndexRouteImport.update({
+  id: '/mockups/',
+  path: '/mockups/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockupsInboxRoute = MockupsInboxRouteImport.update({
+  id: '/mockups/inbox',
+  path: '/mockups/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockupsPoolArisanRoute = MockupsPoolArisanRouteImport.update({
+  id: '/mockups/pool-arisan',
+  path: '/mockups/pool-arisan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockupsPoolCostSplitRoute = MockupsPoolCostSplitRouteImport.update({
+  id: '/mockups/pool-cost-split',
+  path: '/mockups/pool-cost-split',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockupsRoomRoute = MockupsRoomRouteImport.update({
+  id: '/mockups/room',
+  path: '/mockups/room',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockupsRoomsRoute = MockupsRoomsRouteImport.update({
+  id: '/mockups/rooms',
+  path: '/mockups/rooms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/home': typeof AuthedHomeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/mockups/inbox': typeof MockupsInboxRoute
+  '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
+  '/mockups/pool-cost-split': typeof MockupsPoolCostSplitRoute
+  '/mockups/room': typeof MockupsRoomRoute
+  '/mockups/rooms': typeof MockupsRoomsRoute
+  '/mockups/': typeof MockupsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/home': typeof AuthedHomeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/mockups/inbox': typeof MockupsInboxRoute
+  '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
+  '/mockups/pool-cost-split': typeof MockupsPoolCostSplitRoute
+  '/mockups/room': typeof MockupsRoomRoute
+  '/mockups/rooms': typeof MockupsRoomsRoute
+  '/mockups': typeof MockupsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +107,38 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authed/home': typeof AuthedHomeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/mockups/inbox': typeof MockupsInboxRoute
+  '/mockups/pool-arisan': typeof MockupsPoolArisanRoute
+  '/mockups/pool-cost-split': typeof MockupsPoolCostSplitRoute
+  '/mockups/room': typeof MockupsRoomRoute
+  '/mockups/rooms': typeof MockupsRoomsRoute
+  '/mockups/': typeof MockupsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/home' | '/auth/callback'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/home'
+    | '/auth/callback'
+    | '/mockups/inbox'
+    | '/mockups/pool-arisan'
+    | '/mockups/pool-cost-split'
+    | '/mockups/room'
+    | '/mockups/rooms'
+    | '/mockups/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/home' | '/auth/callback'
+  to:
+    | '/'
+    | '/login'
+    | '/home'
+    | '/auth/callback'
+    | '/mockups/inbox'
+    | '/mockups/pool-arisan'
+    | '/mockups/pool-cost-split'
+    | '/mockups/room'
+    | '/mockups/rooms'
+    | '/mockups'
   id:
     | '__root__'
     | '/'
@@ -72,6 +146,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authed/home'
     | '/auth/callback'
+    | '/mockups/inbox'
+    | '/mockups/pool-arisan'
+    | '/mockups/pool-cost-split'
+    | '/mockups/room'
+    | '/mockups/rooms'
+    | '/mockups/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -79,6 +159,12 @@ export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  MockupsInboxRoute: typeof MockupsInboxRoute
+  MockupsPoolArisanRoute: typeof MockupsPoolArisanRoute
+  MockupsPoolCostSplitRoute: typeof MockupsPoolCostSplitRoute
+  MockupsRoomRoute: typeof MockupsRoomRoute
+  MockupsRoomsRoute: typeof MockupsRoomsRoute
+  MockupsIndexRoute: typeof MockupsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -118,6 +204,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mockups/': {
+      id: '/mockups/'
+      path: '/mockups'
+      fullPath: '/mockups/'
+      preLoaderRoute: typeof MockupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mockups/inbox': {
+      id: '/mockups/inbox'
+      path: '/mockups/inbox'
+      fullPath: '/mockups/inbox'
+      preLoaderRoute: typeof MockupsInboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mockups/pool-arisan': {
+      id: '/mockups/pool-arisan'
+      path: '/mockups/pool-arisan'
+      fullPath: '/mockups/pool-arisan'
+      preLoaderRoute: typeof MockupsPoolArisanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mockups/pool-cost-split': {
+      id: '/mockups/pool-cost-split'
+      path: '/mockups/pool-cost-split'
+      fullPath: '/mockups/pool-cost-split'
+      preLoaderRoute: typeof MockupsPoolCostSplitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mockups/room': {
+      id: '/mockups/room'
+      path: '/mockups/room'
+      fullPath: '/mockups/room'
+      preLoaderRoute: typeof MockupsRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mockups/rooms': {
+      id: '/mockups/rooms'
+      path: '/mockups/rooms'
+      fullPath: '/mockups/rooms'
+      preLoaderRoute: typeof MockupsRoomsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -137,6 +265,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  MockupsInboxRoute: MockupsInboxRoute,
+  MockupsPoolArisanRoute: MockupsPoolArisanRoute,
+  MockupsPoolCostSplitRoute: MockupsPoolCostSplitRoute,
+  MockupsRoomRoute: MockupsRoomRoute,
+  MockupsRoomsRoute: MockupsRoomsRoute,
+  MockupsIndexRoute: MockupsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

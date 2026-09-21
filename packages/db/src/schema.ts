@@ -200,7 +200,10 @@ export const rotatingPotRounds = sqliteTable('rotating_pot_rounds', {
   periodLabel: text('period_label').notNull(),
   winnerPoolMembershipId: text('winner_pool_membership_id').references(() => poolMemberships.id),
   drawnAt: integer('drawn_at', { mode: 'timestamp' }),
-  status: text('status', { enum: ['pending', 'drawn'] })
+  // 'paid' added in Phase 5 for recordPayout idempotency — a plain text
+  // column with app-level enum typing (no SQL CHECK constraint), so widening
+  // it needs no migration; see PLAN.md Phase 5 notes.
+  status: text('status', { enum: ['pending', 'drawn', 'paid'] })
     .notNull()
     .default('pending'),
 })

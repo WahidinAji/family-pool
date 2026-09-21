@@ -11,7 +11,9 @@
 // that period — both are append-only histories, looked up by "latest entry
 // at or before this period."
 
-export type Period = string // "YYYY-MM", zero-padded — lexicographically sortable
+import { comparePeriods, nextPeriod, periodFromDate, type Period } from './period.js'
+
+export type { Period }
 
 export interface PriceEntry {
   effectiveFrom: string // "YYYY-MM-DD" (or any string starting with "YYYY-MM")
@@ -43,24 +45,8 @@ export interface CostSplitCoverageResult {
 // future, or a price of 0). 1200 months = 100 years, well beyond any real use.
 const MAX_PERIODS = 1200
 
-export function periodFromDate(date: Date): Period {
-  const y = date.getUTCFullYear()
-  const m = String(date.getUTCMonth() + 1).padStart(2, '0')
-  return `${y}-${m}`
-}
-
 function periodFromDateString(dateStr: string): Period {
   return dateStr.slice(0, 7)
-}
-
-export function nextPeriod(period: Period): Period {
-  const [y, m] = period.split('-').map(Number) as [number, number]
-  const isDecember = m === 12
-  return `${isDecember ? y + 1 : y}-${String(isDecember ? 1 : m + 1).padStart(2, '0')}`
-}
-
-function comparePeriods(a: Period, b: Period): number {
-  return a < b ? -1 : a > b ? 1 : 0
 }
 
 /** The entry with the latest effectiveFrom that is still <= period, or null if none applies yet.

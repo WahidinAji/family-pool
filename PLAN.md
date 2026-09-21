@@ -53,7 +53,7 @@ Build tables in dependency order; one migration per numbered item so history sta
 - [x] 1.11 `receipts` (id, pool_id, uploaded_by_user_id, image_path, extracted_amount integer nullable, confirmed_amount integer nullable, status enum['pending','approved','rejected'], reviewed_by_user_id nullable, reviewed_at nullable, ocr_raw jsonb/text nullable, created_at).
 - [x] 1.12 `pool_ledger_entries` (id, pool_membership_id, receipt_id nullable, amount_delta integer, reason enum['contribution','adjustment','pot_payout'], created_at) — append-only; balance = SUM(amount_delta) per pool_membership.
 - [x] 1.13 `rotating_pot_cycles` (id, pool_id, cycle_number, started_at, ended_at nullable).
-- [x] 1.14 `rotating_pot_rounds` (id, cycle_id, round_number, period_label, winner_pool_membership_id nullable, drawn_at nullable, status enum['pending','drawn']).
+- [x] 1.14 `rotating_pot_rounds` (id, cycle_id, round_number, period_label, winner_pool_membership_id nullable, drawn_at nullable, status enum['pending','drawn','paid'] — 'paid' added in Phase 5 for recordPayout idempotency).
 - [x] 1.15 Seed script: one test room, one cost-split pool, one rotating-pot pool, a few fake users/memberships — for local dev only.
 
 ## Phase 2 — Auth (Magic Link via Resend)
@@ -94,12 +94,12 @@ Build tables in dependency order; one migration per numbered item so history sta
 
 ## Phase 5 — Rotating-Pot Pools (Arisan)
 
-- [ ] 5.1 tRPC: `pool.create` variant for `type='rotating_pot'` (roomId, name, contributionAmount, currency).
-- [ ] 5.2 tRPC: `pool.startCycle(poolId)` — owner-only; creates a `rotating_pot_cycles` row and one `rotating_pot_rounds` row per active pool member (round_number 1..N), all `status='pending'`.
-- [ ] 5.3 tRPC: `pool.drawRound(cycleId, roundNumber)` — owner-only; randomly selects a winner from members who haven't won *this cycle* yet, writes `winner_pool_membership_id` + `drawn_at`, sets `status='drawn'`.
-- [ ] 5.4 tRPC: `pool.recordPayout(roundId)` — writes a `pool_ledger_entries` row (reason='pot_payout') crediting the winner (or however payout is represented — confirm sign convention with the balance model before building).
-- [ ] 5.5 Cycle-completion detection: when every member has won once, mark `cycle.ended_at`; block `drawRound` calls until owner explicitly calls `startCycle` again for a new cycle.
-- [ ] 5.6 Frontend: arisan pool page — current cycle status, "who's left to win," draw button (owner-only) with a satisfying reveal animation, cycle history.
+- [x] 5.1 tRPC: `pool.create` variant for `type='rotating_pot'` (roomId, name, contributionAmount, currency).
+- [x] 5.2 tRPC: `pool.startCycle(poolId)` — owner-only; creates a `rotating_pot_cycles` row and one `rotating_pot_rounds` row per active pool member (round_number 1..N), all `status='pending'`.
+- [x] 5.3 tRPC: `pool.drawRound(cycleId, roundNumber)` — owner-only; randomly selects a winner from members who haven't won *this cycle* yet, writes `winner_pool_membership_id` + `drawn_at`, sets `status='drawn'`.
+- [x] 5.4 tRPC: `pool.recordPayout(roundId)` — writes a `pool_ledger_entries` row (reason='pot_payout') crediting the winner (or however payout is represented — confirm sign convention with the balance model before building).
+- [x] 5.5 Cycle-completion detection: when every member has won once, mark `cycle.ended_at`; block `drawRound` calls until owner explicitly calls `startCycle` again for a new cycle.
+- [x] 5.6 Frontend: arisan pool page — current cycle status, "who's left to win," draw button (owner-only) with a satisfying reveal animation, cycle history.
 
 ## Phase 6 — Receipts & OCR Approval Flow
 

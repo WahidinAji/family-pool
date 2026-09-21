@@ -31,6 +31,7 @@ function RoomPage() {
   const pools = trpc.pool.listForRoom.useQuery({ roomId })
 
   const [poolDialogOpen, setPoolDialogOpen] = useState(false)
+  const [poolType, setPoolType] = useState<'cost_split' | 'rotating_pot'>('cost_split')
   const [poolName, setPoolName] = useState('')
   const [poolPrice, setPoolPrice] = useState('')
 
@@ -102,23 +103,41 @@ function RoomPage() {
                   <form
                     onSubmit={(event) => {
                       event.preventDefault()
-                      const pricePerPerson = Math.round(Number(poolPrice))
-                      if (!Number.isFinite(pricePerPerson) || pricePerPerson <= 0) return
-                      createPool.mutate({ roomId, type: 'cost_split', name: poolName, pricePerPerson })
+                      const amount = Math.round(Number(poolPrice))
+                      if (!Number.isFinite(amount) || amount <= 0) return
+                      if (poolType === 'cost_split') {
+                        createPool.mutate({ roomId, type: 'cost_split', name: poolName, pricePerPerson: amount })
+                      } else {
+                        createPool.mutate({ roomId, type: 'rotating_pot', name: poolName, contributionAmount: amount })
+                      }
                     }}
                   >
                     <DialogHeader>
-                      <DialogTitle>Create a cost-split pool</DialogTitle>
+                      <DialogTitle>Create a pool</DialogTitle>
                       <DialogDescription>
-                        A recurring shared cost (like Spotify) split evenly among its members. Rotating-pot
-                        (arisan) pools arrive in the next phase.
+                        {poolType === 'cost_split'
+                          ? 'A recurring shared cost (like Spotify) split evenly among its members.'
+                          : 'A rotating savings pot (arisan) — each round, one member is randomly drawn to receive the pot.'}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="mt-4 flex flex-col gap-3">
+                      <div className="inline-flex overflow-hidden rounded-md border self-start">
+                        {(['cost_split', 'rotating_pot'] as const).map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setPoolType(type)}
+                            data-active={poolType === type}
+                            className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground text-muted-foreground px-3 py-1.5 text-sm"
+                          >
+                            {type === 'cost_split' ? 'Cost-split' : 'Rotating-pot (arisan)'}
+                          </button>
+                        ))}
+                      </div>
                       <Input
                         autoFocus
                         required
-                        placeholder="e.g. Spotify Family"
+                        placeholder={poolType === 'cost_split' ? 'e.g. Spotify Family' : 'e.g. Arisan Bulanan'}
                         value={poolName}
                         onChange={(event) => setPoolName(event.target.value)}
                       />
@@ -126,7 +145,11 @@ function RoomPage() {
                         required
                         type="number"
                         min={1}
-                        placeholder="Price per person per month (IDR)"
+                        placeholder={
+                          poolType === 'cost_split'
+                            ? 'Price per person per month (IDR)'
+                            : 'Contribution per person per round (IDR)'
+                        }
                         value={poolPrice}
                         onChange={(event) => setPoolPrice(event.target.value)}
                       />

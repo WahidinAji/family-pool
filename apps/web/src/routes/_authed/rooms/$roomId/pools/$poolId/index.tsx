@@ -1,10 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Plus, Settings2 } from 'lucide-react'
+import { Check, Dices, Plus, Settings2 } from 'lucide-react'
 import { AppShell } from '@/components/app-shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import {
@@ -26,6 +28,37 @@ export const Route = createFileRoute('/_authed/rooms/$roomId/pools/$poolId/')({
 
 function PoolPage() {
   const { roomId, poolId } = Route.useParams()
+  const pools = trpc.pool.listForRoom.useQuery({ roomId })
+
+  if (pools.isLoading) {
+    return (
+      <AppShell title="Loading...">
+        <p className="text-muted-foreground text-sm">Loading pool...</p>
+      </AppShell>
+    )
+  }
+
+  const pool = pools.data?.find((p) => p.id === poolId)
+  if (!pool) {
+    return (
+      <AppShell title="Pool not found">
+        <p className="text-muted-foreground text-sm">
+          This pool doesn't exist, or you're not a member of its room.
+        </p>
+      </AppShell>
+    )
+  }
+
+  return pool.type === 'cost_split' ? (
+    <CostSplitPoolView roomId={roomId} poolId={poolId} />
+  ) : (
+    <ArisanPoolView roomId={roomId} poolId={poolId} />
+  )
+}
+
+// --- Cost-split ---------------------------------------------------------
+
+function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string }) {
   const utils = trpc.useUtils()
   const me = trpc.auth.me.useQuery()
   const room = trpc.room.get.useQuery({ roomId })
@@ -333,4 +366,227 @@ function balanceColorClass(balance: number): string {
   if (balance < 0) return 'text-destructive'
   if (balance > 0) return 'text-emerald-700'
   return 'text-muted-foreground'
+}
+
+// --- Rotating-pot (arisan) ----------------------------------------------
+
+function ArisanPoolView({ roomId, poolId }: { roomId: string; poolId: string }) {
+  const utils = trpc.useUtils()
+  const room = trpc.room.get.useQuery({ roomId })
+  const status = trpc.pool.getArisanStatus.useQuery({ poolId })
+
+  const [addMemberOpen, setAddMemberOpen] = useState(false)
+
+  const invalidateStatus = () => utils.pool.getArisanStatus.invalidate({ poolId })
+
+  const addMember = trpc.pool.addMember.useMutation({ onSuccess: invalidateStatus })
+  const startCycle = trpc.pool.startCycle.useMutation({ onSuccess: invalidateStatus })
+  const drawRound = trpc.pool.drawRound.useMutation({ onSuccess: invalidateStatus })
+  const recordPayout = trpc.pool.recordPayout.useMutation({ onSuccess: invalidateStatus })
+
+  if (status.isLoading || room.isLoading) {
+    return (
+      <AppShell title="Loading...">
+        <p className="text-muted-foreground text-sm">Loading pool...</p>
+      </AppShell>
+    )
+  }
+
+  if (status.isError || !status.data || !room.data) {
+    return (
+      <AppShell title="Pool not found">
+        <p className="text-muted-foreground text-sm">
+          {status.error?.message ?? "This pool doesn't exist, or you're not a member of it."}
+        </p>
+      </AppShell>
+    )
+  }
+
+  const { pool, myRoomRole, contributionAmount, members, currentCycle, cycles } = status.data
+  const isOwner = myRoomRole === 'owner'
+  // The rotation grid (with payout buttons) stays on the most recent cycle
+  // even after it ends — a cycle completing (all rounds drawn) doesn't mean
+  // all payouts are confirmed yet, so those "drawn but not paid" rounds must
+  // stay reachable. Only cycles *before* the most recent one count as "past."
+  const featuredCycle = cycles.at(-1) ?? null
+  const nextRound = featuredCycle?.rounds.find((r) => r.status === 'pending')
+  const drawnRounds = featuredCycle?.rounds.filter((r) => r.status !== 'pending').length ?? 0
+  const totalRounds = featuredCycle?.rounds.length ?? 0
+  const pastCycles = featuredCycle ? cycles.filter((c) => c.id !== featuredCycle.id).reverse() : []
+  const nonMembers = room.data.members.filter((rm) => !members.some((pm) => pm.userId === rm.userId))
+
+  return (
+    <AppShell
+      title={pool.name}
+      crumbs={[
+        { label: 'Rooms', to: '/rooms' },
+        { label: room.data.room.name, to: `/rooms/${roomId}` },
+        { label: pool.name },
+      ]}
+      actions={
+        isOwner ? (
+          <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus /> Add member
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a member</DialogTitle>
+                <DialogDescription>
+                  Only current room members can be added. New members join the draw starting next cycle.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-2 flex flex-col gap-2">
+                {nonMembers.length === 0 && (
+                  <p className="text-muted-foreground text-sm">Everyone in the room is already in this pool.</p>
+                )}
+                {nonMembers.map((rm) => (
+                  <div key={rm.userId} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                    <span className="min-w-0 truncate text-sm">{rm.displayName ?? rm.email}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={addMember.isPending}
+                      onClick={() => addMember.mutate({ poolId, userId: rm.userId })}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        ) : undefined
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="sm:col-span-2">
+          <CardHeader>
+            <CardDescription>
+              {currentCycle ? `Cycle ${currentCycle.cycleNumber} — round ${drawnRounds + (nextRound ? 1 : 0)} of ${totalRounds}` : 'No cycle running'}
+            </CardDescription>
+            <CardTitle className="text-xl">
+              {!currentCycle
+                ? 'Start a cycle to begin drawing'
+                : nextRound
+                  ? `${nextRound.periodLabel} draw not run yet`
+                  : 'Cycle complete'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {currentCycle && totalRounds > 0 && (
+              <Progress value={(drawnRounds / totalRounds) * 100} className="mb-3" />
+            )}
+            {isOwner && currentCycle && nextRound && (
+              <Button
+                disabled={drawRound.isPending}
+                onClick={() => drawRound.mutate({ cycleId: currentCycle.id, roundNumber: nextRound.roundNumber })}
+              >
+                <Dices /> {drawRound.isPending ? 'Drawing...' : "Draw this round's winner"}
+              </Button>
+            )}
+            {isOwner && !currentCycle && (
+              <Button disabled={startCycle.isPending} onClick={() => startCycle.mutate({ poolId })}>
+                {startCycle.isPending ? 'Starting...' : 'Start a new cycle'}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="sm:col-span-1">
+          <CardHeader>
+            <CardDescription>Contribution</CardDescription>
+            <CardTitle className="text-xl">
+              {contributionAmount != null ? formatIDR(contributionAmount) : 'Not set'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground text-sm">
+            per person, per round · {members.length} {members.length === 1 ? 'member' : 'members'}
+          </CardContent>
+        </Card>
+      </div>
+
+      {featuredCycle && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-base">Cycle {featuredCycle.cycleNumber}'s rotation</CardTitle>
+            <CardDescription>Everyone wins once before a new cycle can start.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-5">
+              {featuredCycle.rounds.map((round) => (
+                <div
+                  key={round.id}
+                  className={`flex flex-col items-center gap-2 rounded-lg border p-3 text-center ${
+                    round === nextRound ? 'border-primary bg-primary/5' : ''
+                  }`}
+                >
+                  <Avatar className="size-9">
+                    {round.winner ? (
+                      <AvatarFallback className="text-xs">
+                        {round.winner.email.slice(0, 1).toUpperCase()}
+                      </AvatarFallback>
+                    ) : (
+                      <AvatarFallback className="bg-muted text-muted-foreground text-xs">?</AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div>
+                    <p className="text-xs font-medium">{round.periodLabel}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {round.winner ? (round.winner.displayName ?? round.winner.email) : 'Not drawn'}
+                    </p>
+                  </div>
+                  {round.status === 'pending' && <Badge variant="secondary">Pending</Badge>}
+                  {round.status === 'drawn' && (
+                    <>
+                      <Badge variant="outline" className="border-emerald-600 text-emerald-700">
+                        <Check className="size-3" /> Won
+                      </Badge>
+                      {isOwner && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={recordPayout.isPending}
+                          onClick={() => recordPayout.mutate({ roundId: round.id })}
+                        >
+                          Confirm payout sent
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {round.status === 'paid' && (
+                    <Badge variant="outline" className="border-emerald-600 text-emerald-700">
+                      <Check className="size-3" /> Paid out
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {pastCycles.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-base">Past cycles</CardTitle>
+          </CardHeader>
+          <CardContent className="divide-y">
+            {pastCycles.map((cycle) => (
+              <div key={cycle.id} className="py-3 first:pt-0 last:pb-0">
+                <p className="mb-1 text-sm font-medium">Cycle {cycle.cycleNumber}</p>
+                <p className="text-muted-foreground text-sm">
+                  {cycle.rounds
+                    .map((r) => `${r.winner ? (r.winner.displayName ?? r.winner.email) : '—'} (${r.periodLabel})`)
+                    .join(', ')}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </AppShell>
+  )
 }

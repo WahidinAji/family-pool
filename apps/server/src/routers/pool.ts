@@ -1,10 +1,12 @@
 import { TRPCError } from '@trpc/server'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, ne } from 'drizzle-orm'
 import { schema } from '@family-pool/db'
 import { z } from 'zod'
 import { requireRoomMembership, requireRoomOwner } from '../rooms/authorization.js'
 import { requirePoolMembership, requirePoolOwner } from '../pools/authorization.js'
-import { computeCostSplitCoverage, effectivePriceAt, periodFromDate } from '../pools/costSplitCalc.js'
+import { computeCostSplitCoverage, effectivePriceAt } from '../pools/costSplitCalc.js'
+import { periodFromDate, formatPeriodLabel, nextPeriod } from '../pools/period.js'
+import { pickRandomWinner } from '../pools/arisan.js'
 import { protectedProcedure, router } from '../trpc.js'
 
 function today(): string {
@@ -23,13 +25,22 @@ export const poolRouter = router({
 
   create: protectedProcedure
     .input(
-      z.object({
-        roomId: z.string(),
-        type: z.literal('cost_split'),
-        name: z.string().trim().min(1).max(100),
-        pricePerPerson: z.number().int().positive(),
-        currencyCode: z.string().length(3).optional(),
-      }),
+      z.discriminatedUnion('type', [
+        z.object({
+          roomId: z.string(),
+          type: z.literal('cost_split'),
+          name: z.string().trim().min(1).max(100),
+          pricePerPerson: z.number().int().positive(),
+          currencyCode: z.string().length(3).optional(),
+        }),
+        z.object({
+          roomId: z.string(),
+          type: z.literal('rotating_pot'),
+          name: z.string().trim().min(1).max(100),
+          contributionAmount: z.number().int().positive(),
+          currencyCode: z.string().length(3).optional(),
+        }),
+      ]),
     )
     .mutation(({ ctx, input }) => {
       const membership = requireRoomMembership(ctx.db, input.roomId, ctx.currentUserId)
@@ -39,16 +50,21 @@ export const poolRouter = router({
         .insert(schema.pools)
         .values({
           roomId: input.roomId,
-          type: 'cost_split',
+          type: input.type,
           name: input.name,
           currencyCode: input.currencyCode ?? 'IDR',
         })
         .returning()
         .get()
 
+      // Both pool types store their per-period amount the same way — a
+      // rotating-pot's "contribution amount" is just its price history, same
+      // as a cost-split's price, so the same lookup infra (effectivePriceAt)
+      // works for both without duplicating a second amount-history table.
+      const perPersonAmount = input.type === 'cost_split' ? input.pricePerPerson : input.contributionAmount
       ctx.db
         .insert(schema.poolPriceHistory)
-        .values({ poolId: pool.id, effectiveFrom: today(), perPersonAmount: input.pricePerPerson })
+        .values({ poolId: pool.id, effectiveFrom: today(), perPersonAmount })
         .run()
 
       return pool
@@ -143,6 +159,9 @@ export const poolRouter = router({
 
   getStatus: protectedProcedure.input(z.object({ poolId: z.string() })).query(({ ctx, input }) => {
     const { pool, roomMembership } = requirePoolMembership(ctx.db, input.poolId, ctx.currentUserId)
+    if (pool.type !== 'cost_split') {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'This pool is not a cost-split pool.' })
+    }
 
     const priceHistory = ctx.db
       .select({
@@ -232,6 +251,279 @@ export const poolRouter = router({
       myRoomRole: roomMembership.role,
       currentPricePerPerson: effectivePriceAt(periodFromDate(new Date()), priceHistory),
       members,
+    }
+  }),
+
+  // --- Rotating-pot (arisan) --------------------------------------------
+
+  startCycle: protectedProcedure.input(z.object({ poolId: z.string() })).mutation(({ ctx, input }) => {
+    const { pool } = requirePoolOwner(ctx.db, input.poolId, ctx.currentUserId)
+    if (pool.type !== 'rotating_pot') {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'This pool is not a rotating-pot pool.' })
+    }
+
+    const activeCycle = ctx.db
+      .select()
+      .from(schema.rotatingPotCycles)
+      .where(and(eq(schema.rotatingPotCycles.poolId, input.poolId), isNull(schema.rotatingPotCycles.endedAt)))
+      .get()
+    if (activeCycle) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'A cycle is already in progress for this pool.' })
+    }
+
+    const activeMemberships = ctx.db
+      .select({ membershipId: schema.poolMemberships.id })
+      .from(schema.poolMemberships)
+      .where(and(eq(schema.poolMemberships.poolId, input.poolId), isNull(schema.poolMemberships.leftAt)))
+      .all()
+    if (activeMemberships.length === 0) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Add members before starting a cycle.' })
+    }
+
+    const previousCycles = ctx.db
+      .select({ cycleNumber: schema.rotatingPotCycles.cycleNumber })
+      .from(schema.rotatingPotCycles)
+      .where(eq(schema.rotatingPotCycles.poolId, input.poolId))
+      .all()
+    const nextCycleNumber = previousCycles.reduce((max, c) => Math.max(max, c.cycleNumber), 0) + 1
+
+    const cycle = ctx.db
+      .insert(schema.rotatingPotCycles)
+      .values({ poolId: input.poolId, cycleNumber: nextCycleNumber })
+      .returning()
+      .get()
+
+    // One round per active member — round_number represents the chronological
+    // sequence of draws, not any pre-assigned winner.
+    let period = periodFromDate(new Date())
+    for (let i = 0; i < activeMemberships.length; i++) {
+      ctx.db
+        .insert(schema.rotatingPotRounds)
+        .values({ cycleId: cycle.id, roundNumber: i + 1, periodLabel: formatPeriodLabel(period) })
+        .run()
+      period = nextPeriod(period)
+    }
+
+    return cycle
+  }),
+
+  drawRound: protectedProcedure
+    .input(z.object({ cycleId: z.string(), roundNumber: z.number().int().positive() }))
+    .mutation(({ ctx, input }) => {
+      const cycle = ctx.db
+        .select()
+        .from(schema.rotatingPotCycles)
+        .where(eq(schema.rotatingPotCycles.id, input.cycleId))
+        .get()
+      if (!cycle) throw new TRPCError({ code: 'NOT_FOUND' })
+      requirePoolOwner(ctx.db, cycle.poolId, ctx.currentUserId)
+
+      if (cycle.endedAt) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This cycle has already ended.' })
+      }
+
+      const round = ctx.db
+        .select()
+        .from(schema.rotatingPotRounds)
+        .where(
+          and(
+            eq(schema.rotatingPotRounds.cycleId, input.cycleId),
+            eq(schema.rotatingPotRounds.roundNumber, input.roundNumber),
+          ),
+        )
+        .get()
+      if (!round) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (round.status !== 'pending') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This round has already been drawn.' })
+      }
+
+      // Rounds represent chronological months — drawing out of order would
+      // break the "everyone wins exactly once per cycle" guarantee.
+      const earlierPending = ctx.db
+        .select({ roundNumber: schema.rotatingPotRounds.roundNumber })
+        .from(schema.rotatingPotRounds)
+        .where(
+          and(eq(schema.rotatingPotRounds.cycleId, input.cycleId), eq(schema.rotatingPotRounds.status, 'pending')),
+        )
+        .all()
+        .filter((r) => r.roundNumber < input.roundNumber)
+      if (earlierPending.length > 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Earlier rounds in this cycle must be drawn first.' })
+      }
+
+      // 'drawn' and 'paid' both mean "already won this cycle" — only 'pending'
+      // rounds haven't produced a winner yet.
+      const wonAlreadyRows = ctx.db
+        .select({ winnerId: schema.rotatingPotRounds.winnerPoolMembershipId })
+        .from(schema.rotatingPotRounds)
+        .where(
+          and(eq(schema.rotatingPotRounds.cycleId, input.cycleId), ne(schema.rotatingPotRounds.status, 'pending')),
+        )
+        .all()
+      const wonAlready = new Set(wonAlreadyRows.map((r) => r.winnerId).filter((id): id is string => id != null))
+
+      const eligible = ctx.db
+        .select({ membershipId: schema.poolMemberships.id })
+        .from(schema.poolMemberships)
+        .where(and(eq(schema.poolMemberships.poolId, cycle.poolId), isNull(schema.poolMemberships.leftAt)))
+        .all()
+        .map((m) => m.membershipId)
+        .filter((membershipId) => !wonAlready.has(membershipId))
+
+      if (eligible.length === 0) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'No eligible members left to draw from — someone may have left the pool.',
+        })
+      }
+
+      const winnerPoolMembershipId = pickRandomWinner(eligible)
+
+      ctx.db
+        .update(schema.rotatingPotRounds)
+        .set({ winnerPoolMembershipId, drawnAt: new Date(), status: 'drawn' })
+        .where(eq(schema.rotatingPotRounds.id, round.id))
+        .run()
+
+      // Cycle completes once no pending rounds remain.
+      const stillPending = ctx.db
+        .select({ id: schema.rotatingPotRounds.id })
+        .from(schema.rotatingPotRounds)
+        .where(
+          and(eq(schema.rotatingPotRounds.cycleId, input.cycleId), eq(schema.rotatingPotRounds.status, 'pending')),
+        )
+        .all()
+      if (stillPending.length === 0) {
+        ctx.db
+          .update(schema.rotatingPotCycles)
+          .set({ endedAt: new Date() })
+          .where(eq(schema.rotatingPotCycles.id, input.cycleId))
+          .run()
+      }
+
+      return { winnerPoolMembershipId } as const
+    }),
+
+  recordPayout: protectedProcedure.input(z.object({ roundId: z.string() })).mutation(({ ctx, input }) => {
+    const round = ctx.db.select().from(schema.rotatingPotRounds).where(eq(schema.rotatingPotRounds.id, input.roundId)).get()
+    if (!round) throw new TRPCError({ code: 'NOT_FOUND' })
+
+    const cycle = ctx.db
+      .select()
+      .from(schema.rotatingPotCycles)
+      .where(eq(schema.rotatingPotCycles.id, round.cycleId))
+      .get()
+    if (!cycle) throw new TRPCError({ code: 'NOT_FOUND' })
+
+    requirePoolOwner(ctx.db, cycle.poolId, ctx.currentUserId)
+
+    if (round.status === 'pending') {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: "This round hasn't been drawn yet." })
+    }
+    if (round.status === 'paid') {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'This round has already been paid out.' })
+    }
+    if (!round.winnerPoolMembershipId) {
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Drawn round is missing a winner.' })
+    }
+
+    const priceHistory = ctx.db
+      .select({
+        effectiveFrom: schema.poolPriceHistory.effectiveFrom,
+        amount: schema.poolPriceHistory.perPersonAmount,
+        createdAt: schema.poolPriceHistory.createdAt,
+      })
+      .from(schema.poolPriceHistory)
+      .where(eq(schema.poolPriceHistory.poolId, cycle.poolId))
+      .all()
+    const contributionAmount = effectivePriceAt(periodFromDate(new Date()), priceHistory)
+    if (contributionAmount == null) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'No contribution amount set for this pool.' })
+    }
+
+    const activeMemberCount = ctx.db
+      .select({ id: schema.poolMemberships.id })
+      .from(schema.poolMemberships)
+      .where(and(eq(schema.poolMemberships.poolId, cycle.poolId), isNull(schema.poolMemberships.leftAt)))
+      .all().length
+
+    // Crediting the winner (see PLAN.md Phase 5): a positive ledger entry,
+    // same sign convention as a cost-split contribution. Unlike cost-split,
+    // this isn't "coverage" — it's the lump sum the winner actually receives.
+    const potAmount = contributionAmount * activeMemberCount
+    ctx.db
+      .insert(schema.poolLedgerEntries)
+      .values({ poolMembershipId: round.winnerPoolMembershipId, amountDelta: potAmount, reason: 'pot_payout' })
+      .run()
+
+    ctx.db.update(schema.rotatingPotRounds).set({ status: 'paid' }).where(eq(schema.rotatingPotRounds.id, round.id)).run()
+
+    return { ok: true, amount: potAmount } as const
+  }),
+
+  getArisanStatus: protectedProcedure.input(z.object({ poolId: z.string() })).query(({ ctx, input }) => {
+    const { pool, roomMembership } = requirePoolMembership(ctx.db, input.poolId, ctx.currentUserId)
+    if (pool.type !== 'rotating_pot') {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'This pool is not a rotating-pot pool.' })
+    }
+
+    const priceHistory = ctx.db
+      .select({
+        effectiveFrom: schema.poolPriceHistory.effectiveFrom,
+        amount: schema.poolPriceHistory.perPersonAmount,
+        createdAt: schema.poolPriceHistory.createdAt,
+      })
+      .from(schema.poolPriceHistory)
+      .where(eq(schema.poolPriceHistory.poolId, input.poolId))
+      .all()
+
+    const members = ctx.db
+      .select({
+        membershipId: schema.poolMemberships.id,
+        userId: schema.users.id,
+        email: schema.users.email,
+        displayName: schema.users.displayName,
+      })
+      .from(schema.poolMemberships)
+      .innerJoin(schema.users, eq(schema.users.id, schema.poolMemberships.userId))
+      .where(and(eq(schema.poolMemberships.poolId, input.poolId), isNull(schema.poolMemberships.leftAt)))
+      .all()
+
+    const cycles = ctx.db
+      .select()
+      .from(schema.rotatingPotCycles)
+      .where(eq(schema.rotatingPotCycles.poolId, input.poolId))
+      .all()
+      .sort((a, b) => a.cycleNumber - b.cycleNumber)
+
+    const cycleIds = cycles.map((c) => c.id)
+    const roundsByCycle = new Map<string, (typeof schema.rotatingPotRounds.$inferSelect)[]>()
+    for (const cycleId of cycleIds) {
+      const rounds = ctx.db
+        .select()
+        .from(schema.rotatingPotRounds)
+        .where(eq(schema.rotatingPotRounds.cycleId, cycleId))
+        .all()
+        .sort((a, b) => a.roundNumber - b.roundNumber)
+      roundsByCycle.set(cycleId, rounds)
+    }
+
+    const userByMembership = new Map(members.map((m) => [m.membershipId, m]))
+    const currentCycle = cycles.find((c) => !c.endedAt) ?? null
+
+    return {
+      pool,
+      myRoomRole: roomMembership.role,
+      contributionAmount: effectivePriceAt(periodFromDate(new Date()), priceHistory),
+      members,
+      currentCycle,
+      cycles: cycles.map((cycle) => ({
+        ...cycle,
+        rounds: (roundsByCycle.get(cycle.id) ?? []).map((round) => ({
+          ...round,
+          winner: round.winnerPoolMembershipId ? (userByMembership.get(round.winnerPoolMembershipId) ?? null) : null,
+        })),
+      })),
     }
   }),
 })

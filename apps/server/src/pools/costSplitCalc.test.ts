@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
-import { computeCostSplitCoverage, effectivePriceAt, nextPeriod, periodFromDate } from './costSplitCalc.js'
+import { computeCostSplitCoverage, effectivePriceAt } from './costSplitCalc.js'
+import { nextPeriod, periodFromDate } from './period.js'
 
 const d = (iso: string) => new Date(`${iso}T00:00:00Z`)
 

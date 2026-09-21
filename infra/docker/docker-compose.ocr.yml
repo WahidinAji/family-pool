@@ -1,0 +1,10 @@
+services:
+  ocr:
+    build:
+      context: ../..
+      dockerfile: services/ocr/Dockerfile
+    environment:
+      OCR_ADDR: :8080
+      TESSERACT_LANG: ind+eng
+    ports:
+      - "8080:8080"

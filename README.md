@@ -7,7 +7,7 @@ full build plan and locked-in product decisions.
 ## Stack
 
 pnpm workspace · React + TanStack Router/Query + tRPC (web) · Effect (server) ·
-Drizzle ORM + SQLite (db) · Tailwind + shadcn/ui.
+Drizzle ORM + SQLite (db) · Tailwind + shadcn/ui · Go + Tesseract (self-hosted OCR).
 
 ## Local dev setup
 
@@ -23,8 +23,8 @@ Drizzle ORM + SQLite (db) · Tailwind + shadcn/ui.
    cp .env.example .env
    ```
 
-   Fill in `RESEND_API_KEY` (magic-link login emails) and `VISION_API_KEY` (receipt OCR).
-   Defaults are fine for everything else in local dev.
+   Fill in `RESEND_API_KEY` for magic-link login emails. Receipt OCR can use the local
+   filename fallback, or the self-hosted Go/Tesseract service via `OCR_SERVICE_URL`.
 
 3. **Run database migrations**:
 
@@ -33,7 +33,17 @@ Drizzle ORM + SQLite (db) · Tailwind + shadcn/ui.
    pnpm db:migrate    # apply migrations to the local SQLite file
    ```
 
-4. **Run the app** (two terminals):
+4. **Optional: run the OCR service**:
+
+   ```sh
+   cd services/ocr
+   go run ./cmd/ocr-service    # OCR service on :8080
+   ```
+
+   Then set `OCR_SERVICE_URL=http://localhost:8080/v1/receipt-ocr` for the server.
+   See [docs/ocr.md](./docs/ocr.md) for Docker/self-hosting notes.
+
+5. **Run the app** (two terminals):
 
    ```sh
    pnpm dev:server    # tRPC/Effect server on :4000
@@ -52,4 +62,8 @@ apps/
 packages/
   db/       Drizzle ORM schema + SQLite client, migrations
   shared/   Types/zod schemas shared between web and server
+services/
+  ocr/      Go HTTP service wrapping Tesseract for receipt OCR
+infra/
+  docker/   Compose files and deployment-oriented Docker wiring
 ```

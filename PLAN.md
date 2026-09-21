@@ -12,7 +12,7 @@ Source of truth for scope: this doc reflects a full requirements interview (gril
   - **Cost-split** (e.g. Spotify): recurring fixed price, equal split by default, optional per-member override amount.
   - **Rotating-pot** (Arisan): recurring contribution; each period the app runs a **random draw** for who receives the pot; a member is excluded from future draws in the current cycle once they've won, until everyone in the cycle has won once; **owner manually starts** each new cycle.
 - **Pool membership is dynamic**: join/leave dates are tracked; calculations only apply to a member's active date range. Leaving with a nonzero balance just marks the membership **inactive** — balance is preserved as a historical record, never blocked or force-zeroed.
-- **Receipts**: member uploads a receipt image. Amount is extracted via a **server-side call to a cloud vision API** (OCR/auto-extraction — not manual typing). Owner **approves/rejects**; only approved receipts count toward balance. Images stored on a **local Docker volume**.
+- **Receipts**: member uploads a receipt image. Amount is extracted via a **server-side OCR boundary** (self-hosted Go + Tesseract service for v1, replaceable later; never from the browser directly). Owner **approves/rejects**; only approved receipts count toward balance. Images stored on a **local Docker volume**.
 - **Balance model**: a running **currency balance per member per pool** is the source of truth (ledger of deltas). "Paid through month X" / "whose turn in arisan" is a **derived display calculation** from balance + price history — never hand-edited directly.
 - **Currency**: single currency per room, integer minor-unit storage (no floats), default IDR.
 - **Notifications**: in-app only for v1. No email beyond the magic-link login itself.
@@ -104,7 +104,7 @@ Build tables in dependency order; one migration per numbered item so history sta
 ## Phase 6 — Receipts & OCR Approval Flow
 
 - [x] 6.1 File upload endpoint: accept image, validate type/size, store on the local Docker volume under a per-room/per-pool path, save `image_path` in a new `receipts` row (status='pending').
-- [x] 6.2 Vision API integration: server-side call (never from the browser directly — keep API key server-only) that extracts a transfer amount from the uploaded image; store raw response in `ocr_raw`, best-guess amount in `extracted_amount`. (Provider adapter is isolated server-side; local/dev fallback records raw metadata and can extract amounts from filename text until `VISION_PROVIDER`/`VISION_API_KEY` are configured.)
+- [x] 6.2 OCR integration: server-side call (never from the browser directly) that extracts a transfer amount from the uploaded image; store raw response in `ocr_raw`, best-guess amount in `extracted_amount`. (Provider adapter is isolated server-side; local/dev fallback records raw metadata and can extract amounts from filename text until `OCR_SERVICE_URL` is configured.)
 - [x] 6.3 Uploader confirmation step: show extracted amount, let the uploader confirm or correct it before final submit (`confirmed_amount`) — OCR won't be perfect, this is the safety net before it ever reaches the owner.
 - [x] 6.4 tRPC: `receipt.approve(receiptId)` — owner-only; writes a `pool_ledger_entries` row (reason='contribution', amount_delta = confirmed_amount) and sets status='approved'.
 - [x] 6.5 tRPC: `receipt.reject(receiptId, reason?)` — owner-only; sets status='rejected'; rejected receipts never touch the ledger.

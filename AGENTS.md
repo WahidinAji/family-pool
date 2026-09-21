@@ -34,6 +34,10 @@ apps/
 packages/
   db/       Drizzle schema (src/schema.ts), migrations/, dev seed script
   shared/   Types/zod schemas shared between web and server (mostly empty so far)
+services/
+  ocr/      Go + Tesseract HTTP OCR service; app calls it via OCR_SERVICE_URL
+infra/
+  docker/   Self-hosting compose/Docker wiring (app + auxiliary services)
 ```
 
 ## Commands

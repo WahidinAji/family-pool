@@ -1,0 +1,85 @@
+# Deployment
+
+This repo is structured as a self-hosted monorepo: the product app lives under
+`apps/`, auxiliary services live under `services/`, and deployment wiring lives
+under `infra/`.
+
+## Docker Compose stack
+
+The compose stack runs three containers:
+
+- `web`: nginx serving the Vite build and proxying `/api/*` to the server.
+- `server`: Effect/tRPC server, SQLite migrations on startup, receipt file storage.
+- `ocr`: Go + Tesseract OCR service used by receipt uploads.
+
+```sh
+cp .env.example .env
+# edit PUBLIC_APP_URL, SESSION_SECRET, RESEND_* as needed
+
+docker compose -f infra/docker/docker-compose.yml up --build
+```
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+Override the host port if needed:
+
+```sh
+WEB_PORT=18443 docker compose -f infra/docker/docker-compose.yml up --build
+```
+
+## Important environment variables
+
+For compose:
+
+```env
+PUBLIC_APP_URL=https://your-public-host.example.com
+SESSION_SECRET=replace-with-a-long-random-secret
+RESEND_API_KEY=...
+RESEND_FROM_ADDRESS=login@example.com
+WEB_PORT=8080
+```
+
+Inside compose, the server uses:
+
+```env
+DATABASE_PATH=/data/app.sqlite
+RECEIPT_UPLOAD_DIR=/receipts
+OCR_SERVICE_URL=http://ocr:8080/v1/receipt-ocr
+```
+
+These are already set in `infra/docker/docker-compose.yml`.
+
+## Persistent data
+
+Compose creates named volumes:
+
+- `sqlite-data`: SQLite database + WAL files.
+- `receipt-images`: uploaded receipt images.
+
+Back both up. The database tracks real money balances.
+
+For v1, use either host volume snapshots or a scheduled SQLite backup command:
+
+```sh
+docker compose -f infra/docker/docker-compose.yml exec server \
+  sqlite3 /data/app.sqlite ".backup '/data/backup-$(date +%F).sqlite'"
+```
+
+Litestream wiring is still a Phase 8 task; keep the volume backup step in place
+until then.
+
+## Cloudflared
+
+Point the existing tunnel at the `web` service/host port, not the server
+container directly. nginx serves the SPA and proxies `/api`.
+
+```text
+cloudflared -> http://localhost:8080 -> web/nginx -> server + OCR
+```
+
+Set `PUBLIC_APP_URL` to the externally reachable URL so CORS and magic-link URLs
+are generated correctly.

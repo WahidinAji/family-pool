@@ -27,7 +27,7 @@ async function callOcrService(input: {
   image: Buffer
 }): Promise<ReceiptOcrResult> {
   const form = new FormData()
-  form.set('file', new Blob([input.image], { type: input.mimeType }), input.fileName)
+  form.set('file', new Blob([new Uint8Array(input.image)], { type: input.mimeType }), input.fileName)
 
   const response = await fetch(input.serviceUrl, { method: 'POST', body: form })
   if (!response.ok) {

@@ -1,0 +1,28 @@
+FROM node:24-bookworm-slim
+
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/* \
+  && corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/server/package.json apps/server/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/db/package.json packages/db/package.json
+COPY packages/shared/package.json packages/shared/package.json
+
+RUN pnpm install --frozen-lockfile
+
+COPY apps apps
+COPY packages packages
+COPY eslint.config.js .prettierrc.json ./
+
+ENV NODE_ENV=production
+ENV PORT=4000
+ENV DATABASE_PATH=/data/app.sqlite
+ENV RECEIPT_UPLOAD_DIR=/receipts
+
+EXPOSE 4000
+CMD ["sh", "-c", "pnpm db:migrate && pnpm --filter @family-pool/server exec tsx src/main.ts"]

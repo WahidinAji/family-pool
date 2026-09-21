@@ -53,6 +53,16 @@ Drizzle ORM + SQLite (db) · Tailwind + shadcn/ui · Go + Tesseract (self-hosted
    Open http://localhost:5173 — the homepage pings the server over tRPC to confirm the
    two are wired up.
 
+## Docker self-host stack
+
+```sh
+docker compose -f infra/docker/docker-compose.yml up --build
+```
+
+This starts nginx/web, the Effect/tRPC server, and the Go/Tesseract OCR service.
+See [docs/deployment.md](./docs/deployment.md) for environment variables, volumes,
+cloudflared routing, and backup notes.
+
 ## Project layout
 
 ```

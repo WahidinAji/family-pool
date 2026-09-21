@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc -b",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@family-pool/db": "workspace:*",

@@ -1,5 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Copy, RefreshCcw } from 'lucide-react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { Copy, Plus, RefreshCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { AppShell } from '@/components/app-shell'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,15 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { trpc } from '@/lib/trpc'
 
 export const Route = createFileRoute('/_authed/rooms/$roomId/')({
@@ -18,6 +28,20 @@ function RoomPage() {
   const { roomId } = Route.useParams()
   const utils = trpc.useUtils()
   const room = trpc.room.get.useQuery({ roomId })
+  const pools = trpc.pool.listForRoom.useQuery({ roomId })
+
+  const [poolDialogOpen, setPoolDialogOpen] = useState(false)
+  const [poolName, setPoolName] = useState('')
+  const [poolPrice, setPoolPrice] = useState('')
+
+  const createPool = trpc.pool.create.useMutation({
+    onSuccess: async () => {
+      await utils.pool.listForRoom.invalidate({ roomId })
+      setPoolDialogOpen(false)
+      setPoolName('')
+      setPoolPrice('')
+    },
+  })
 
   const createInvite = trpc.room.createInvite.useMutation({
     onSuccess: () => utils.room.get.invalidate({ roomId }),
@@ -66,11 +90,90 @@ function RoomPage() {
         </TabsList>
 
         <TabsContent value="pools">
-          <Card>
-            <CardContent className="text-muted-foreground pt-6 text-center text-sm">
-              Pools (Spotify-style cost-splits and arisan pots) land in the next phase of the build.
-            </CardContent>
-          </Card>
+          {myRole === 'owner' && (
+            <div className="mb-4 flex justify-end">
+              <Dialog open={poolDialogOpen} onOpenChange={setPoolDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus /> New pool
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      const pricePerPerson = Math.round(Number(poolPrice))
+                      if (!Number.isFinite(pricePerPerson) || pricePerPerson <= 0) return
+                      createPool.mutate({ roomId, type: 'cost_split', name: poolName, pricePerPerson })
+                    }}
+                  >
+                    <DialogHeader>
+                      <DialogTitle>Create a cost-split pool</DialogTitle>
+                      <DialogDescription>
+                        A recurring shared cost (like Spotify) split evenly among its members. Rotating-pot
+                        (arisan) pools arrive in the next phase.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4 flex flex-col gap-3">
+                      <Input
+                        autoFocus
+                        required
+                        placeholder="e.g. Spotify Family"
+                        value={poolName}
+                        onChange={(event) => setPoolName(event.target.value)}
+                      />
+                      <Input
+                        required
+                        type="number"
+                        min={1}
+                        placeholder="Price per person per month (IDR)"
+                        value={poolPrice}
+                        onChange={(event) => setPoolPrice(event.target.value)}
+                      />
+                    </div>
+                    {createPool.isError && (
+                      <p className="text-destructive mt-2 text-sm">{createPool.error.message}</p>
+                    )}
+                    <DialogFooter className="mt-4">
+                      <Button type="submit" disabled={createPool.isPending}>
+                        {createPool.isPending ? 'Creating...' : 'Create pool'}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+
+          {pools.isLoading && <p className="text-muted-foreground text-sm">Loading...</p>}
+
+          {pools.data && pools.data.length === 0 && (
+            <Card>
+              <CardContent className="text-muted-foreground pt-6 text-center text-sm">
+                No pools yet.{' '}
+                {myRole === 'owner'
+                  ? 'Create one to start splitting a shared cost.'
+                  : 'The room owner can create one.'}
+              </CardContent>
+            </Card>
+          )}
+
+          {pools.data && pools.data.length > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {pools.data.map((pool) => (
+                <Link key={pool.id} to="/rooms/$roomId/pools/$poolId" params={{ roomId, poolId: pool.id }}>
+                  <Card className="hover:border-primary/50 h-full transition-colors">
+                    <CardHeader>
+                      <CardTitle className="text-base">{pool.name}</CardTitle>
+                      <CardDescription>
+                        {pool.type === 'cost_split' ? 'Cost-split pool' : 'Rotating-pot pool'}
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="members">

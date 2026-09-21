@@ -22,6 +22,7 @@ import { Route as MockupsRoomsRouteImport } from './routes/mockups/rooms'
 import { Route as AuthedRoomsIndexRouteImport } from './routes/_authed/rooms/index'
 import { Route as AuthedRoomsJoinRouteImport } from './routes/_authed/rooms/join'
 import { Route as AuthedRoomsRoomIdIndexRouteImport } from './routes/_authed/rooms/$roomId/index'
+import { Route as AuthedRoomsRoomIdPoolsPoolIdIndexRouteImport } from './routes/_authed/rooms/$roomId/pools/$poolId/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -87,6 +88,12 @@ const AuthedRoomsRoomIdIndexRoute = AuthedRoomsRoomIdIndexRouteImport.update({
   path: '/rooms/$roomId/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedRoomsRoomIdPoolsPoolIdIndexRoute =
+  AuthedRoomsRoomIdPoolsPoolIdIndexRouteImport.update({
+    id: '/rooms/$roomId/pools/$poolId/',
+    path: '/rooms/$roomId/pools/$poolId/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/rooms/join': typeof AuthedRoomsJoinRoute
   '/rooms/': typeof AuthedRoomsIndexRoute
   '/rooms/$roomId/': typeof AuthedRoomsRoomIdIndexRoute
+  '/rooms/$roomId/pools/$poolId/': typeof AuthedRoomsRoomIdPoolsPoolIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -115,6 +123,7 @@ export interface FileRoutesByTo {
   '/rooms/join': typeof AuthedRoomsJoinRoute
   '/rooms': typeof AuthedRoomsIndexRoute
   '/rooms/$roomId': typeof AuthedRoomsRoomIdIndexRoute
+  '/rooms/$roomId/pools/$poolId': typeof AuthedRoomsRoomIdPoolsPoolIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,6 +140,7 @@ export interface FileRoutesById {
   '/_authed/rooms/join': typeof AuthedRoomsJoinRoute
   '/_authed/rooms/': typeof AuthedRoomsIndexRoute
   '/_authed/rooms/$roomId/': typeof AuthedRoomsRoomIdIndexRoute
+  '/_authed/rooms/$roomId/pools/$poolId/': typeof AuthedRoomsRoomIdPoolsPoolIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/rooms/join'
     | '/rooms/'
     | '/rooms/$roomId/'
+    | '/rooms/$roomId/pools/$poolId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/rooms/join'
     | '/rooms'
     | '/rooms/$roomId'
+    | '/rooms/$roomId/pools/$poolId'
   id:
     | '__root__'
     | '/'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/_authed/rooms/join'
     | '/_authed/rooms/'
     | '/_authed/rooms/$roomId/'
+    | '/_authed/rooms/$roomId/pools/$poolId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRoomsRoomIdIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/rooms/$roomId/pools/$poolId/': {
+      id: '/_authed/rooms/$roomId/pools/$poolId/'
+      path: '/rooms/$roomId/pools/$poolId'
+      fullPath: '/rooms/$roomId/pools/$poolId/'
+      preLoaderRoute: typeof AuthedRoomsRoomIdPoolsPoolIdIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
@@ -291,12 +311,15 @@ interface AuthedRouteChildren {
   AuthedRoomsJoinRoute: typeof AuthedRoomsJoinRoute
   AuthedRoomsIndexRoute: typeof AuthedRoomsIndexRoute
   AuthedRoomsRoomIdIndexRoute: typeof AuthedRoomsRoomIdIndexRoute
+  AuthedRoomsRoomIdPoolsPoolIdIndexRoute: typeof AuthedRoomsRoomIdPoolsPoolIdIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedRoomsJoinRoute: AuthedRoomsJoinRoute,
   AuthedRoomsIndexRoute: AuthedRoomsIndexRoute,
   AuthedRoomsRoomIdIndexRoute: AuthedRoomsRoomIdIndexRoute,
+  AuthedRoomsRoomIdPoolsPoolIdIndexRoute:
+    AuthedRoomsRoomIdPoolsPoolIdIndexRoute,
 }
 
 const AuthedRouteWithChildren =

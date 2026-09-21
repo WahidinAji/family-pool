@@ -83,14 +83,14 @@ Build tables in dependency order; one migration per numbered item so history sta
 
 ## Phase 4 — Cost-Split Pools (Spotify-style)
 
-- [ ] 4.1 tRPC: `pool.create` (roomId, type='cost_split', name, initialPricePerPerson, currency) — owner-only; writes `pools` + first `pool_price_history` row.
-- [ ] 4.2 tRPC: `pool.addMember` / `pool.removeMember` (sets joined_at/left_at on `pool_memberships`) — owner-only; only room members can be added.
-- [ ] 4.3 tRPC: `pool.setMemberOverride` (poolMembershipId, amount, effectiveFrom) — owner-only; writes `pool_membership_overrides`.
-- [ ] 4.4 tRPC: `pool.updatePrice` (poolId, newPricePerPerson, effectiveFrom) — owner-only; appends a new `pool_price_history` row (never mutates old rows).
-- [ ] 4.5 Core calc module (pure functions, unit-testable): given a pool_membership's ledger balance + effective price-per-period history, compute "paid through" period and current balance in currency. This is the single most important piece of business logic — isolate it from tRPC/DB code so it can be tested directly.
-- [ ] 4.6 Unit tests for the calc module: on-time payment, prepay multiple periods, underpay/partial period, price change mid-history, member joined mid-cycle, member left with residual balance.
-- [ ] 4.7 tRPC: `pool.getStatus(poolId)` — returns per-member computed status (balance, paid-through period) using the calc module.
-- [ ] 4.8 Frontend: pool detail page — member list with balance/paid-through, "add pool" form, price/override edit UI (owner-only).
+- [x] 4.1 tRPC: `pool.create` (roomId, type='cost_split', name, initialPricePerPerson, currency) — owner-only; writes `pools` + first `pool_price_history` row.
+- [x] 4.2 tRPC: `pool.addMember` / `pool.removeMember` (sets joined_at/left_at on `pool_memberships`) — owner-only; only room members can be added.
+- [x] 4.3 tRPC: `pool.setMemberOverride` (poolMembershipId, amount, effectiveFrom) — owner-only; writes `pool_membership_overrides`.
+- [x] 4.4 tRPC: `pool.updatePrice` (poolId, newPricePerPerson, effectiveFrom) — owner-only; appends a new `pool_price_history` row (never mutates old rows).
+- [x] 4.5 Core calc module (pure functions, unit-testable): given a pool_membership's ledger balance + effective price-per-period history, compute "paid through" period and current balance in currency. This is the single most important piece of business logic — isolate it from tRPC/DB code so it can be tested directly.
+- [x] 4.6 Unit tests for the calc module: on-time payment, prepay multiple periods, underpay/partial period, price change mid-history, member joined mid-cycle, member left with residual balance.
+- [x] 4.7 tRPC: `pool.getStatus(poolId)` — returns per-member computed status (balance, paid-through period) using the calc module.
+- [x] 4.8 Frontend: pool detail page — member list with balance/paid-through, "add pool" form, price/override edit UI (owner-only).
 
 ## Phase 5 — Rotating-Pot Pools (Arisan)
 

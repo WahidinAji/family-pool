@@ -245,7 +245,8 @@ function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string 
           <CardTitle className="text-base">Members</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Member</TableHead>
@@ -312,6 +313,7 @@ function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string 
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

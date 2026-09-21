@@ -63,7 +63,7 @@ export function AppShell({
 
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0 flex-1">
             {crumbs && crumbs.length > 0 && (
               <nav className="text-muted-foreground mb-1 flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {crumbs.map((crumb, i) => (
@@ -85,7 +85,7 @@ export function AppShell({
             )}
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           </div>
-          {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+          {actions && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">{actions}</div>}
         </div>
 
         {children}

@@ -118,7 +118,7 @@ Build tables in dependency order; one migration per numbered item so history sta
 - [x] 7.1 Home dashboard: rooms the user's in, a rollup of "pools where you owe money" and "pending approvals waiting on you as owner."
 - [x] 7.2 Empty states for every list view (no rooms yet, no pools yet, no receipts yet).
 - [x] 7.3 Toast/error handling conventions wired consistently through tRPC error boundaries.
-- [ ] 7.4 Mobile-responsive pass on all pages (this will very likely be used from phones for photo uploads).
+- [x] 7.4 Mobile-responsive pass on all pages (this will very likely be used from phones for photo uploads).
 - [x] 7.5 Basic loading/skeleton states for async data via TanStack Query.
 - [ ] 7.6 Accessibility audit pass: run an automated contrast/a11y checker (e.g. axe-core or Lighthouse) against every page in both themes (modern + retro), fix WCAG 2.1 AA contrast failures, verify keyboard-only navigation through the core flows (login, approve/reject a receipt, run an arisan draw), and check focus indicators are visible on every interactive element.
 

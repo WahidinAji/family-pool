@@ -16,3 +16,5 @@ export function createTrpcClient() {
     ],
   })
 }
+
+export type TrpcClient = ReturnType<typeof createTrpcClient>

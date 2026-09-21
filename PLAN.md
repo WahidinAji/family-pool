@@ -56,15 +56,15 @@ Build tables in dependency order; one migration per numbered item so history sta
 
 ## Phase 2 — Auth (Magic Link via Resend)
 
-- [ ] 2.1 Server: `requestMagicLink(email)` — create/find user by email, generate token, store hashed token + expiry (e.g. 15 min) in `magic_link_tokens`.
-- [ ] 2.2 Integrate Resend SDK; send the magic-link email (plain, clear subject/body — this is the *only* login path, so make it unmistakable and check spam-safe formatting).
-- [ ] 2.3 Server: `verifyMagicLink(token)` — validate token (exists, unexpired, unconsumed), mark consumed, create a session row, return session cookie.
-- [ ] 2.4 Rate-limit `requestMagicLink` per email/IP (e.g. max 3 requests / 10 min) to prevent email-bombing abuse — this is a public signup form.
-- [ ] 2.5 Session middleware: read session cookie, attach `currentUser` to tRPC context; reject/redirect when missing or expired.
-- [ ] 2.6 Frontend: "enter your email" page → "check your email" confirmation state.
-- [ ] 2.7 Frontend: `/auth/callback?token=...` route that calls `verifyMagicLink` and redirects into the app on success, shows a clear error + "request a new link" CTA on failure/expiry.
-- [ ] 2.8 Logout: delete session row, clear cookie.
-- [ ] 2.9 Auth guard on the router: unauthenticated users get bounced to the login page for any protected route.
+- [x] 2.1 Server: `requestMagicLink(email)` — create/find user by email, generate token, store hashed token + expiry (e.g. 15 min) in `magic_link_tokens`.
+- [x] 2.2 Integrate Resend SDK; send the magic-link email (plain, clear subject/body — this is the *only* login path, so make it unmistakable and check spam-safe formatting).
+- [x] 2.3 Server: `verifyMagicLink(token)` — validate token (exists, unexpired, unconsumed), mark consumed, create a session row, return session cookie.
+- [x] 2.4 Rate-limit `requestMagicLink` per email/IP (e.g. max 3 requests / 10 min) to prevent email-bombing abuse — this is a public signup form.
+- [x] 2.5 Session middleware: read session cookie, attach `currentUser` to tRPC context; reject/redirect when missing or expired.
+- [x] 2.6 Frontend: "enter your email" page → "check your email" confirmation state.
+- [x] 2.7 Frontend: `/auth/callback?token=...` route that calls `verifyMagicLink` and redirects into the app on success, shows a clear error + "request a new link" CTA on failure/expiry.
+- [x] 2.8 Logout: delete session row, clear cookie.
+- [x] 2.9 Auth guard on the router: unauthenticated users get bounced to the login page for any protected route.
 
 ## Phase 3 — Rooms & Invites
 

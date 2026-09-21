@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Copy, Plus, RefreshCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { AppShell } from '@/components/app-shell'
+import { EmptyState } from '@/components/empty-state'
+import { LoadingState } from '@/components/loading-state'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -168,17 +170,17 @@ function RoomPage() {
             </div>
           )}
 
-          {pools.isLoading && <p className="text-muted-foreground text-sm">Loading...</p>}
+          {pools.isLoading && <LoadingState label="Loading pools..." />}
 
           {pools.data && pools.data.length === 0 && (
-            <Card>
-              <CardContent className="text-muted-foreground pt-6 text-center text-sm">
-                No pools yet.{' '}
-                {myRole === 'owner'
-                  ? 'Create one to start splitting a shared cost.'
-                  : 'The room owner can create one.'}
-              </CardContent>
-            </Card>
+            <EmptyState
+              title="No pools yet"
+              description={
+                myRole === 'owner'
+                  ? 'Create a cost-split or rotating-pot pool to start tracking shared money.'
+                  : 'The room owner can create pools for shared costs and arisan cycles.'
+              }
+            />
           )}
 
           {pools.data && pools.data.length > 0 && (

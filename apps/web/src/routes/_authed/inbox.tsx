@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AppShell } from '@/components/app-shell'
+import { EmptyState } from '@/components/empty-state'
+import { LoadingState } from '@/components/loading-state'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,13 +18,12 @@ function InboxPage() {
 
   return (
     <AppShell title="Approval inbox" crumbs={[{ label: 'Rooms', to: '/rooms' }, { label: 'Inbox' }]}> 
-      {rooms.isLoading && <p className="text-muted-foreground text-sm">Loading...</p>}
+      {rooms.isLoading && <LoadingState label="Loading approval inbox..." />}
       {ownerRooms.length === 0 && !rooms.isLoading && (
-        <Card>
-          <CardContent className="text-muted-foreground pt-6 text-center text-sm">
-            You don't own any rooms yet, so there are no approvals waiting on you.
-          </CardContent>
-        </Card>
+        <EmptyState
+          title="No approvals yet"
+          description="You don't own any rooms yet, so there are no receipt approvals waiting on you."
+        />
       )}
       <div className="grid gap-4">
         {ownerRooms.map((room) => (
@@ -54,8 +55,10 @@ function RoomPendingApprovals({ roomId, roomName }: { roomId: string; roomName: 
         <CardDescription>Pending receipt approvals across this room's pools.</CardDescription>
       </CardHeader>
       <CardContent>
-        {pending.isLoading && <p className="text-muted-foreground text-sm">Loading receipts...</p>}
-        {pending.data?.length === 0 && <p className="text-muted-foreground text-sm">No pending receipts.</p>}
+        {pending.isLoading && <LoadingState label="Loading receipts..." />}
+        {pending.data?.length === 0 && (
+          <EmptyState title="No pending receipts" description="New confirmed receipt uploads will appear here for approval." />
+        )}
         {pending.data && pending.data.length > 0 && (
           <div className="divide-y rounded-lg border">
             {pending.data.map((receipt) => (

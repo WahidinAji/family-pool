@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppShell } from '@/components/app-shell'
+import { EmptyState } from '@/components/empty-state'
+import { LoadingState } from '@/components/loading-state'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -167,14 +169,18 @@ function RoomsPage() {
         </div>
       )}
 
-      {(rooms.isLoading || dashboard.isLoading) && <p className="text-muted-foreground text-sm">Loading...</p>}
+      {(rooms.isLoading || dashboard.isLoading) && <LoadingState label="Loading your rooms..." />}
 
       {rooms.data && rooms.data.length === 0 && (
-        <Card>
-          <CardContent className="text-muted-foreground pt-6 text-center text-sm">
-            No rooms yet — create one, or ask someone for an invite link.
-          </CardContent>
-        </Card>
+        <EmptyState
+          title="No rooms yet"
+          description="Create a room to start managing shared costs, or ask someone for an invite link."
+          action={
+            <Button variant="outline" asChild>
+              <Link to="/rooms/join">Join a room</Link>
+            </Button>
+          }
+        />
       )}
 
       {rooms.data && rooms.data.length > 0 && (

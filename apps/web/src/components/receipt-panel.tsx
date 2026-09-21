@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Upload } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
+import { LoadingState } from '@/components/loading-state'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -133,8 +135,13 @@ export function ReceiptPanel({ poolId, isOwner }: { poolId: string; isOwner: boo
           </div>
         )}
 
-        {receipts.isLoading && <p className="text-muted-foreground text-sm">Loading receipts...</p>}
-        {receipts.data?.length === 0 && <p className="text-muted-foreground text-sm">No receipts yet.</p>}
+        {receipts.isLoading && <LoadingState label="Loading receipts..." />}
+        {receipts.data?.length === 0 && (
+          <EmptyState
+            title="No receipts yet"
+            description="Upload a transfer receipt and confirm the extracted amount to submit it for owner approval."
+          />
+        )}
         {receipts.data && receipts.data.length > 0 && (
           <div className="divide-y rounded-lg border">
             {receipts.data.map((receipt) => (

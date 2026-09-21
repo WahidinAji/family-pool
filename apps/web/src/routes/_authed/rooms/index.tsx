@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog'
 import { trpc } from '@/lib/trpc'
 import { formatIDR } from '@/lib/money'
+import { toastError, toastSuccess } from '@/lib/feedback'
 
 export const Route = createFileRoute('/_authed/rooms/')({
   component: RoomsPage,
@@ -35,10 +36,12 @@ function RoomsPage() {
   const createRoom = trpc.room.create.useMutation({
     onSuccess: async (room) => {
       await utils.room.listMine.invalidate()
+      toastSuccess('Room created')
       setOpen(false)
       setName('')
       navigate({ to: '/rooms/$roomId', params: { roomId: room.id } })
     },
+    onError: (error) => toastError(error, 'Could not create room.'),
   })
 
   return (

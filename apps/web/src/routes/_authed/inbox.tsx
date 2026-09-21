@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { trpc } from '@/lib/trpc'
 import { formatIDR } from '@/lib/money'
+import { toastError, toastSuccess } from '@/lib/feedback'
 
 export const Route = createFileRoute('/_authed/inbox')({
   component: InboxPage,
@@ -39,13 +40,17 @@ function RoomPendingApprovals({ roomId, roomName }: { roomId: string; roomName: 
   const pending = trpc.receipt.listPendingForRoom.useQuery({ roomId })
   const approve = trpc.receipt.approve.useMutation({
     onSuccess: () => {
+      toastSuccess('Receipt approved')
       utils.receipt.listPendingForRoom.invalidate({ roomId })
     },
+    onError: (error) => toastError(error, 'Could not approve receipt.'),
   })
   const reject = trpc.receipt.reject.useMutation({
     onSuccess: () => {
+      toastSuccess('Receipt rejected')
       utils.receipt.listPendingForRoom.invalidate({ roomId })
     },
+    onError: (error) => toastError(error, 'Could not reject receipt.'),
   })
 
   return (

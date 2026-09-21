@@ -22,6 +22,7 @@ import {
 import { trpc } from '@/lib/trpc'
 import { formatIDR } from '@/lib/money'
 import { formatPeriod } from '@/lib/period'
+import { toastError, toastSuccess } from '@/lib/feedback'
 
 export const Route = createFileRoute('/_authed/rooms/$roomId/pools/$poolId/')({
   component: PoolPage,
@@ -73,21 +74,37 @@ function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string 
 
   const invalidateStatus = () => utils.pool.getStatus.invalidate({ poolId })
 
-  const addMember = trpc.pool.addMember.useMutation({ onSuccess: invalidateStatus })
-  const removeMember = trpc.pool.removeMember.useMutation({ onSuccess: invalidateStatus })
+  const addMember = trpc.pool.addMember.useMutation({
+    onSuccess: () => {
+      toastSuccess('Member added to pool')
+      invalidateStatus()
+    },
+    onError: (error) => toastError(error, 'Could not add member.'),
+  })
+  const removeMember = trpc.pool.removeMember.useMutation({
+    onSuccess: () => {
+      toastSuccess('Member removed from pool')
+      invalidateStatus()
+    },
+    onError: (error) => toastError(error, 'Could not remove member.'),
+  })
   const updatePrice = trpc.pool.updatePrice.useMutation({
     onSuccess: () => {
+      toastSuccess('Price updated')
       invalidateStatus()
       setEditPriceOpen(false)
       setPriceInput('')
     },
+    onError: (error) => toastError(error, 'Could not update price.'),
   })
   const setOverride = trpc.pool.setMemberOverride.useMutation({
     onSuccess: () => {
+      toastSuccess('Custom price saved')
       invalidateStatus()
       setOverrideTarget(null)
       setOverrideInput('')
     },
+    onError: (error) => toastError(error, 'Could not save custom price.'),
   })
 
   if (status.isLoading || room.isLoading) {
@@ -382,10 +399,34 @@ function ArisanPoolView({ roomId, poolId }: { roomId: string; poolId: string }) 
 
   const invalidateStatus = () => utils.pool.getArisanStatus.invalidate({ poolId })
 
-  const addMember = trpc.pool.addMember.useMutation({ onSuccess: invalidateStatus })
-  const startCycle = trpc.pool.startCycle.useMutation({ onSuccess: invalidateStatus })
-  const drawRound = trpc.pool.drawRound.useMutation({ onSuccess: invalidateStatus })
-  const recordPayout = trpc.pool.recordPayout.useMutation({ onSuccess: invalidateStatus })
+  const addMember = trpc.pool.addMember.useMutation({
+    onSuccess: () => {
+      toastSuccess('Member added to pool')
+      invalidateStatus()
+    },
+    onError: (error) => toastError(error, 'Could not add member.'),
+  })
+  const startCycle = trpc.pool.startCycle.useMutation({
+    onSuccess: () => {
+      toastSuccess('Arisan cycle started')
+      invalidateStatus()
+    },
+    onError: (error) => toastError(error, 'Could not start cycle.'),
+  })
+  const drawRound = trpc.pool.drawRound.useMutation({
+    onSuccess: () => {
+      toastSuccess('Winner drawn')
+      invalidateStatus()
+    },
+    onError: (error) => toastError(error, 'Could not draw winner.'),
+  })
+  const recordPayout = trpc.pool.recordPayout.useMutation({
+    onSuccess: () => {
+      toastSuccess('Payout confirmed')
+      invalidateStatus()
+    },
+    onError: (error) => toastError(error, 'Could not confirm payout.'),
+  })
 
   if (status.isLoading || room.isLoading) {
     return (

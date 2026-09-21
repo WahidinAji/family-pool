@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { trpc } from '@/lib/trpc'
 import { formatIDR } from '@/lib/money'
+import { toastError, toastSuccess } from '@/lib/feedback'
 
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -40,21 +41,39 @@ export function ReceiptPanel({ poolId, isOwner }: { poolId: string; isOwner: boo
   const upload = trpc.receipt.uploadAndExtract.useMutation({
     onSuccess: (receipt) => {
       setUploadError(null)
+      toastSuccess('Receipt uploaded — confirm the amount')
       setDraftReceiptId(receipt.id)
       setConfirmedAmount(String(receipt.extractedAmount ?? ''))
       invalidateReceipts()
     },
-    onError: (error) => setUploadError(error.message),
+    onError: (error) => {
+      setUploadError(error.message)
+      toastError(error, 'Could not upload receipt.')
+    },
   })
   const confirm = trpc.receipt.confirmAmount.useMutation({
     onSuccess: () => {
+      toastSuccess('Receipt submitted for approval')
       setDraftReceiptId(null)
       setConfirmedAmount('')
       invalidateReceipts()
     },
+    onError: (error) => toastError(error, 'Could not submit receipt.'),
   })
-  const approve = trpc.receipt.approve.useMutation({ onSuccess: invalidateReceipts })
-  const reject = trpc.receipt.reject.useMutation({ onSuccess: invalidateReceipts })
+  const approve = trpc.receipt.approve.useMutation({
+    onSuccess: () => {
+      toastSuccess('Receipt approved')
+      invalidateReceipts()
+    },
+    onError: (error) => toastError(error, 'Could not approve receipt.'),
+  })
+  const reject = trpc.receipt.reject.useMutation({
+    onSuccess: () => {
+      toastSuccess('Receipt rejected')
+      invalidateReceipts()
+    },
+    onError: (error) => toastError(error, 'Could not reject receipt.'),
+  })
 
   const draft = receipts.data?.find((receipt) => receipt.id === draftReceiptId)
 

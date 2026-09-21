@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Copy, Plus, RefreshCcw } from 'lucide-react'
-import { toast } from 'sonner'
 import { AppShell } from '@/components/app-shell'
 import { EmptyState } from '@/components/empty-state'
 import { LoadingState } from '@/components/loading-state'
@@ -21,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { trpc } from '@/lib/trpc'
+import { toastError, toastSuccess } from '@/lib/feedback'
 
 export const Route = createFileRoute('/_authed/rooms/$roomId/')({
   component: RoomPage,
@@ -40,26 +40,42 @@ function RoomPage() {
   const createPool = trpc.pool.create.useMutation({
     onSuccess: async () => {
       await utils.pool.listForRoom.invalidate({ roomId })
+      toastSuccess('Pool created')
       setPoolDialogOpen(false)
       setPoolName('')
       setPoolPrice('')
     },
+    onError: (error) => toastError(error, 'Could not create pool.'),
   })
 
   const createInvite = trpc.room.createInvite.useMutation({
-    onSuccess: () => utils.room.get.invalidate({ roomId }),
+    onSuccess: () => {
+      toastSuccess('Invite link refreshed')
+      utils.room.get.invalidate({ roomId })
+    },
+    onError: (error) => toastError(error, 'Could not update invite link.'),
   })
   const revokeInvite = trpc.room.revokeInvite.useMutation({
-    onSuccess: () => utils.room.get.invalidate({ roomId }),
+    onSuccess: () => {
+      toastSuccess('Invite link revoked')
+      utils.room.get.invalidate({ roomId })
+    },
+    onError: (error) => toastError(error, 'Could not revoke invite link.'),
   })
   const removeMember = trpc.room.removeMember.useMutation({
-    onSuccess: () => utils.room.get.invalidate({ roomId }),
+    onSuccess: () => {
+      toastSuccess('Member removed')
+      utils.room.get.invalidate({ roomId })
+    },
+    onError: (error) => toastError(error, 'Could not remove member.'),
   })
   const leaveRoom = trpc.room.leaveRoom.useMutation({
     onSuccess: () => {
+      toastSuccess('Left room')
       utils.room.listMine.invalidate()
       window.location.assign('/rooms')
     },
+    onError: (error) => toastError(error, 'Could not leave room.'),
   })
 
   if (room.isLoading) {
@@ -256,7 +272,7 @@ function RoomPage() {
                         variant="outline"
                         onClick={() => {
                           navigator.clipboard.writeText(inviteUrl)
-                          toast.success('Invite link copied')
+                          toastSuccess('Invite link copied')
                         }}
                       >
                         <Copy /> Copy

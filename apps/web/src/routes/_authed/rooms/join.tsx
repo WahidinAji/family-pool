@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { trpc } from '@/lib/trpc'
+import { toastError, toastSuccess } from '@/lib/feedback'
 
 const searchSchema = z.object({ code: z.string().optional() })
 
@@ -23,8 +24,10 @@ function JoinRoomPage() {
   const joinByInvite = trpc.room.joinByInvite.useMutation({
     onSuccess: async (result) => {
       await utils.room.listMine.invalidate()
+      toastSuccess('Joined room')
       navigate({ to: '/rooms/$roomId', params: { roomId: result.roomId } })
     },
+    onError: (error) => toastError(error, 'Could not join room.'),
   })
 
   return (

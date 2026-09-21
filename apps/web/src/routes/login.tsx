@@ -4,6 +4,7 @@ import { trpc } from '@/lib/trpc'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { toastError, toastSuccess } from '@/lib/feedback'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -13,7 +14,11 @@ function LoginPage() {
   const [email, setEmail] = useState('')
   const [sentTo, setSentTo] = useState<string | null>(null)
   const requestMagicLink = trpc.auth.requestMagicLink.useMutation({
-    onSuccess: () => setSentTo(email),
+    onSuccess: () => {
+      toastSuccess('Login link sent')
+      setSentTo(email)
+    },
+    onError: (error) => toastError(error, 'Could not send login link.'),
   })
 
   return (

@@ -115,7 +115,7 @@ Build tables in dependency order; one migration per numbered item so history sta
 
 ## Phase 7 — Dashboard & Polish
 
-- [ ] 7.1 Home dashboard: rooms the user's in, a rollup of "pools where you owe money" and "pending approvals waiting on you as owner."
+- [x] 7.1 Home dashboard: rooms the user's in, a rollup of "pools where you owe money" and "pending approvals waiting on you as owner."
 - [ ] 7.2 Empty states for every list view (no rooms yet, no pools yet, no receipts yet).
 - [ ] 7.3 Toast/error handling conventions wired consistently through tRPC error boundaries.
 - [ ] 7.4 Mobile-responsive pass on all pages (this will very likely be used from phones for photo uploads).

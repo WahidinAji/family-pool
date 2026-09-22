@@ -2,7 +2,8 @@
 
 Self-hosted app for managing shared recurring costs (cost-split pools like Spotify) and
 rotating savings pots (arisan) within invite-only rooms. See [PLAN.md](./PLAN.md) for the
-full build plan and locked-in product decisions.
+full build plan and locked-in product decisions, or [docs/SHOWCASE.md](./docs/SHOWCASE.md)
+for a screenshot walkthrough.
 
 ## Stack
 

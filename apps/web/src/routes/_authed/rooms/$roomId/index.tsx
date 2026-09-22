@@ -266,7 +266,12 @@ function RoomPage() {
               <CardContent className="flex flex-col gap-2">
                 {inviteUrl ? (
                   <>
-                    <Input readOnly value={inviteUrl} className="w-full min-w-0 sm:max-w-sm" />
+                    <Input
+                      readOnly
+                      aria-label="Invite link"
+                      value={inviteUrl}
+                      className="w-full min-w-0 sm:max-w-sm"
+                    />
                     <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"

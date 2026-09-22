@@ -253,7 +253,11 @@ function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string 
                 <TableHead>Paid through</TableHead>
                 <TableHead>Custom price</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
-                {isOwner && <TableHead className="text-right">&nbsp;</TableHead>}
+                {isOwner && (
+                  <TableHead className="text-right">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>

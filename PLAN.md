@@ -120,7 +120,7 @@ Build tables in dependency order; one migration per numbered item so history sta
 - [x] 7.3 Toast/error handling conventions wired consistently through tRPC error boundaries.
 - [x] 7.4 Mobile-responsive pass on all pages (this will very likely be used from phones for photo uploads).
 - [x] 7.5 Basic loading/skeleton states for async data via TanStack Query.
-- [ ] 7.6 Accessibility audit pass: run an automated contrast/a11y checker (e.g. axe-core or Lighthouse) against every page in both themes (modern + retro), fix WCAG 2.1 AA contrast failures, verify keyboard-only navigation through the core flows (login, approve/reject a receipt, run an arisan draw), and check focus indicators are visible on every interactive element.
+- [x] 7.6 Accessibility audit pass: run an automated contrast/a11y checker (e.g. axe-core or Lighthouse) against every page in both themes (modern + retro), fix WCAG 2.1 AA contrast failures, verify keyboard-only navigation through the core flows (login, approve/reject a receipt, run an arisan draw), and check focus indicators are visible on every interactive element. (axe-core via Playwright against every route + every dialog/tab state, both themes: fixed an unlabeled invite-link input, a missing `<main>` landmark app-wide, a missing page heading on `/login`, and an empty table header cell — zero WCAG 2.1 A/AA violations and zero axe best-practice violations remain. Login, receipt-approval, and arisan-draw flows verified keyboard-only end to end with visible focus rings confirmed in both themes.)
 
 ## Phase 8 — Deployment
 

@@ -22,7 +22,8 @@ function LoginPage() {
   })
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-screen items-center justify-center p-4">
+      <h1 className="sr-only">Log in</h1>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Log in</CardTitle>
@@ -58,6 +59,6 @@ function LoginPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </main>
   )
 }

@@ -134,12 +134,14 @@ Build tables in dependency order; one migration per numbered item so history sta
 
 ## Phase 9 — Tests & Hardening (ongoing, not strictly sequential)
 
-- [ ] 9.1 Unit tests for the balance/calc module (Phase 4.6 — front-load this, it's the highest-risk logic).
-- [ ] 9.2 Integration tests for auth (magic link request/verify/expiry/rate-limit).
-- [ ] 9.3 Integration tests for invite join flow (valid code, revoked code, already-a-member).
-- [ ] 9.4 Integration tests for receipt approve/reject → ledger effects.
-- [ ] 9.5 Integration tests for arisan draw fairness (no repeat winner within a cycle, cycle completion detection).
-- [ ] 9.6 Basic abuse-prevention review: magic-link rate limiting, upload size/type limits, owner-only mutation checks on every pool/room mutation.
+- [x] 9.1 Unit tests for the balance/calc module (Phase 4.6 — front-load this, it's the highest-risk logic). (Already existed from Phase 4.6: `costSplitCalc.test.ts`.)
+- [x] 9.2 Integration tests for auth (magic link request/verify/expiry/rate-limit).
+- [x] 9.3 Integration tests for invite join flow (valid code, revoked code, already-a-member).
+- [x] 9.4 Integration tests for receipt approve/reject → ledger effects.
+- [x] 9.5 Integration tests for arisan draw fairness (no repeat winner within a cycle, cycle completion detection).
+- [x] 9.6 Basic abuse-prevention review: magic-link rate limiting, upload size/type limits, owner-only mutation checks on every pool/room mutation. (Manually audited every mutation in room/pool/receipt routers against its expected authorization level — all correctly gated, no gaps found. Backed by runnable tests: rate-limit window + per-email/IP scoping, 5MB upload cap, MIME allowlist bypass attempt, and every owner-only mutation across room/pool/receipt.)
+
+9.2–9.6 implemented as tRPC-router-level integration tests (`createCallerFactory`, in-memory SQLite per test, `node --import tsx --test` — no new dependency), not Playwright: they test the actual authorization/DB-effect logic directly, run fast and deterministically, and match this project's existing no-extra-test-framework convention. Playwright remains the right tool for ad hoc manual/visual verification (as used throughout this project's development), not a committed test suite. See `apps/server/src/test-helpers.ts` and `apps/server/src/routers/{auth,room,receipt,arisan,authorization}.test.ts`.
 
 ---
 

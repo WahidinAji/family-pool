@@ -77,6 +77,19 @@ export const poolRouter = router({
       return pool
     }),
 
+  // Soft-delete, matching the rest of the schema (leftAt, revokedAt, etc.) —
+  // an archived pool's ledger entries and receipts stay intact for the
+  // financial history, they just stop showing up in listForRoom.
+  archive: protectedProcedure.input(z.object({ poolId: z.string() })).mutation(({ ctx, input }) => {
+    const { pool } = requirePoolOwner(ctx.db, input.poolId, ctx.currentUserId)
+    if (pool.archivedAt) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'This pool has already been deleted.' })
+    }
+
+    ctx.db.update(schema.pools).set({ archivedAt: new Date() }).where(eq(schema.pools.id, input.poolId)).run()
+    return { ok: true } as const
+  }),
+
   addMember: protectedProcedure
     .input(z.object({ poolId: z.string(), userId: z.string() }))
     .mutation(({ ctx, input }) => {

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Check, Dices, Plus, Settings2 } from 'lucide-react'
 import { AppShell } from '@/components/app-shell'
@@ -62,6 +62,7 @@ function PoolPage() {
 
 function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string }) {
   const utils = trpc.useUtils()
+  const navigate = useNavigate()
   const me = trpc.auth.me.useQuery()
   const room = trpc.room.get.useQuery({ roomId })
   const status = trpc.pool.getStatus.useQuery({ poolId })
@@ -105,6 +106,14 @@ function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string 
       setOverrideInput('')
     },
     onError: (error) => toastError(error, 'Could not save custom price.'),
+  })
+  const deletePool = trpc.pool.archive.useMutation({
+    onSuccess: () => {
+      toastSuccess('Pool deleted')
+      utils.pool.listForRoom.invalidate({ roomId })
+      navigate({ to: '/rooms/$roomId', params: { roomId } })
+    },
+    onError: (error) => toastError(error, 'Could not delete pool.'),
   })
 
   if (status.isLoading || room.isLoading) {
@@ -212,6 +221,23 @@ function CostSplitPoolView({ roomId, poolId }: { roomId: string; poolId: string 
                 </form>
               </DialogContent>
             </Dialog>
+
+            <Button
+              variant="outline"
+              className="text-destructive"
+              disabled={deletePool.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Delete "${pool.name}"? Existing receipts and balances are kept for the record, but the pool itself will disappear from the room.`,
+                  )
+                ) {
+                  deletePool.mutate({ poolId })
+                }
+              }}
+            >
+              {deletePool.isPending ? 'Deleting...' : 'Delete pool'}
+            </Button>
           </>
         ) : undefined
       }
@@ -398,6 +424,7 @@ function balanceColorClass(balance: number): string {
 
 function ArisanPoolView({ roomId, poolId }: { roomId: string; poolId: string }) {
   const utils = trpc.useUtils()
+  const navigate = useNavigate()
   const room = trpc.room.get.useQuery({ roomId })
   const status = trpc.pool.getArisanStatus.useQuery({ poolId })
 
@@ -432,6 +459,14 @@ function ArisanPoolView({ roomId, poolId }: { roomId: string; poolId: string }) 
       invalidateStatus()
     },
     onError: (error) => toastError(error, 'Could not confirm payout.'),
+  })
+  const deletePool = trpc.pool.archive.useMutation({
+    onSuccess: () => {
+      toastSuccess('Pool deleted')
+      utils.pool.listForRoom.invalidate({ roomId })
+      navigate({ to: '/rooms/$roomId', params: { roomId } })
+    },
+    onError: (error) => toastError(error, 'Could not delete pool.'),
   })
 
   if (status.isLoading || room.isLoading) {
@@ -475,39 +510,58 @@ function ArisanPoolView({ roomId, poolId }: { roomId: string; poolId: string }) 
       ]}
       actions={
         isOwner ? (
-          <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus /> Add member
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add a member</DialogTitle>
-                <DialogDescription>
-                  Only current room members can be added. New members join the draw starting next cycle.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="mt-2 flex flex-col gap-2">
-                {nonMembers.length === 0 && (
-                  <p className="text-muted-foreground text-sm">Everyone in the room is already in this pool.</p>
-                )}
-                {nonMembers.map((rm) => (
-                  <div key={rm.userId} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                    <span className="min-w-0 truncate text-sm">{rm.displayName ?? rm.email}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={addMember.isPending}
-                      onClick={() => addMember.mutate({ poolId, userId: rm.userId })}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
+          <>
+            <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus /> Add member
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a member</DialogTitle>
+                  <DialogDescription>
+                    Only current room members can be added. New members join the draw starting next cycle.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-2 flex flex-col gap-2">
+                  {nonMembers.length === 0 && (
+                    <p className="text-muted-foreground text-sm">Everyone in the room is already in this pool.</p>
+                  )}
+                  {nonMembers.map((rm) => (
+                    <div key={rm.userId} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                      <span className="min-w-0 truncate text-sm">{rm.displayName ?? rm.email}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={addMember.isPending}
+                        onClick={() => addMember.mutate({ poolId, userId: rm.userId })}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Button
+              variant="outline"
+              className="text-destructive"
+              disabled={deletePool.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Delete "${pool.name}"? Existing receipts and payout history are kept for the record, but the pool itself will disappear from the room.`,
+                  )
+                ) {
+                  deletePool.mutate({ poolId })
+                }
+              }}
+            >
+              {deletePool.isPending ? 'Deleting...' : 'Delete pool'}
+            </Button>
+          </>
         ) : undefined
       }
     >

@@ -5,6 +5,7 @@ import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { currentUser } from '@/lib/mockData'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { Logo } from '@/components/logo'
 
 export function MockupShell({
   title,
@@ -21,8 +22,8 @@ export function MockupShell({
     <div data-slot="shell" className="bg-muted/30 min-h-screen">
       <header data-slot="shell-header" className="bg-background border-b">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <Link to="/mockups" className="text-sm font-semibold tracking-tight">
-            family-pool
+          <Link to="/mockups">
+            <Logo />
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />

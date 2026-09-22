@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/logo'
 import { trpc } from '@/lib/trpc'
 
 function initialsFrom(email: string) {
@@ -35,8 +36,8 @@ export function AppShell({
     <div data-slot="shell" className="bg-muted/30 min-h-screen">
       <header data-slot="shell-header" className="bg-background border-b">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
-          <Link to="/rooms" className="shrink-0 text-sm font-semibold tracking-tight">
-            family-pool
+          <Link to="/rooms" className="shrink-0">
+            <Logo />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             {user && (

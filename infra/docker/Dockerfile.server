@@ -1,4 +1,9 @@
-FROM node:24-bookworm-slim
+# Pinned (not a floating :24 tag): node:24-bookworm-slim currently resolves to
+# 24.21.0, which crashes better-sqlite3 with a native
+# "Assertion failed: (env) != nullptr" in Statement::~Statement() under
+# concurrent/batched request load. 24.11.1 does not reproduce this — verified
+# via the Phase 8.7 smoke test. Re-check before bumping.
+FROM node:24.15-bookworm-slim
 
 WORKDIR /app
 

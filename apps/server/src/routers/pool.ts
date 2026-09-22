@@ -67,6 +67,13 @@ export const poolRouter = router({
         .values({ poolId: pool.id, effectiveFrom: today(), perPersonAmount })
         .run()
 
+      // The creator doesn't automatically get a pool_memberships row just by
+      // owning the room — a pool can have members the owner isn't part of
+      // (e.g. a shared cost they administer but don't pay into). But the
+      // common case is the owner also participates, so pre-add them; they
+      // can remove themselves afterward like any other member.
+      ctx.db.insert(schema.poolMemberships).values({ poolId: pool.id, userId: ctx.currentUserId }).run()
+
       return pool
     }),
 

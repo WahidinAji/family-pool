@@ -130,7 +130,7 @@ Build tables in dependency order; one migration per numbered item so history sta
 - [x] 8.4 Drizzle migration run step on container startup (or a separate one-shot migrate job before the app starts).
 - [x] 8.5 Hook up the existing cloudflared tunnel config to point at the app's container port.
 - [x] 8.6 Set up Litestream (or a cron `sqlite3 .backup` script) writing snapshots to a separate volume/remote target.
-- [ ] 8.7 Smoke-test the full flow against the deployed instance: signup via magic link → create room → invite → join → create both pool types → upload+approve a receipt → run an arisan draw.
+- [x] 8.7 Smoke-test the full flow against the deployed instance: signup via magic link → create room → invite → join → create both pool types → upload+approve a receipt → run an arisan draw. (Ran the full flow via Playwright against a real `docker compose` build, not dev servers — found and fixed two real bugs: (1) the floating `node:24-bookworm-slim` base image crashed the server natively in `better-sqlite3` under concurrent/batched request load, pinned to `node:24.15-bookworm-slim`, verified crash-free across repeated fresh-DB runs; (2) `pool.create` never gave the creating owner an actual `pool_memberships` row, so pool owners silently weren't tracked in their own pool's ledger — fixed to auto-add them, mirroring `room.create`. Also added `restart: unless-stopped` to web/server/ocr. Confirmed the real self-hosted Tesseract OCR service correctly extracts amounts from an actual receipt image end-to-end, not just the filename-fallback path used everywhere else this project. Full 12-step flow passes cleanly twice in a row post-fix.)
 
 ## Phase 9 — Tests & Hardening (ongoing, not strictly sequential)
 
